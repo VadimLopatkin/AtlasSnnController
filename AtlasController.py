@@ -3,18 +3,16 @@ import time
 
 from atlas_msgs.msg import AtlasState
 
-print rospy
+class AtlasController():
 
-def state_cb( msg):
-    print msg
-    time.sleep(0.5)
+    def __init__(self):
+        rospy.init_node('atlas_controller')
+        self.subscriber = rospy.Subscriber('atlas/atlas_state', AtlasState,
+                                  self._state_cb)
+        # rospy.spin()
 
-def main():
-    rospy.init_node('atlas_controller')
-    rospy.Subscriber('atlas/atlas_state', AtlasState, state_cb)
-    rospy.spin()
-    print "working"
+    def _state_cb(self, msg):
+        self._state = msg
 
-
-if __name__ == '__main__':
-    main()
+    def get_state(self):
+        return self._state
