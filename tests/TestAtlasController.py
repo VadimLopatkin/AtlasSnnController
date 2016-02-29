@@ -1,5 +1,7 @@
 import time
 import unittest
+import numpy as np
+
 
 import rospy
 from atlas_msgs.msg import AtlasState
@@ -60,6 +62,19 @@ class TestAtlasController(unittest.TestCase):
                 1).l_hand, atlas_controller.get_state().l_hand)
         self.assertEqual(self._get_fake_atlas_state_message(
                 1).r_hand, atlas_controller.get_state().r_hand)
+
+    def test_input_layer_of_snn_is_normalized(self):
+        atlas_controller = AtlasController()
+        time.sleep(1)
+        self._init_fake_atlas_publisher()
+        time.sleep(1)
+        self._send_fake_atlas_states(0.001)
+        time.sleep(1)
+        network = atlas_controller.get_network()
+        input_layer_values = network.get_input_layer_values()
+        self.assertLessEqual(np.amax(input_layer_values),1)
+        self.assertGreaterEqual(np.amin(input_layer_values),0)
+
 
     def _init_fake_atlas_publisher(self,create_node=False):
         self._fake_atlas_publisher = rospy.Publisher(self.ATLAS_STATE_TOPIC,

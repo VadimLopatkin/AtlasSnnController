@@ -15,8 +15,16 @@ class AtlasController():
         # rospy.spin()
         self._network = SpikingNeuralNetwork()
 
+
     def _state_cb(self, msg):
         self._state = msg
+        self._set_snn_input_layer_state()
 
     def get_state(self):
         return self._state
+
+    def _set_snn_input_layer_state(self):
+        self._network.set_input_layer_state(self._state)
+
+    def get_network(self):
+        return self._network
