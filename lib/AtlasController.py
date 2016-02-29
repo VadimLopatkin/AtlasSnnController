@@ -3,6 +3,9 @@ import time
 
 from atlas_msgs.msg import AtlasState
 
+from lib.SpikingNeuralNetwork import SpikingNeuralNetwork
+
+
 class AtlasController():
 
     def __init__(self):
@@ -10,6 +13,7 @@ class AtlasController():
         self.subscriber = rospy.Subscriber('atlas/atlas_state', AtlasState,
                                   self._state_cb)
         # rospy.spin()
+        self._network = SpikingNeuralNetwork()
 
     def _state_cb(self, msg):
         self._state = msg

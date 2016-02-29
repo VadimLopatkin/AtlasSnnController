@@ -1,9 +1,10 @@
-import unittest
-import rospy
 import time
+import unittest
+
+import rospy
 from atlas_msgs.msg import AtlasState
 
-from AtlasController import AtlasController
+from lib.AtlasController import AtlasController
 
 
 class TestAtlasController(unittest.TestCase):
