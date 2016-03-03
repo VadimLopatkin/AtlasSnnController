@@ -7,6 +7,8 @@ class SpikingNeuralNetwork():
     INPUT_LAYER_SIZE = 277 # probably smaller, as k_effort is just flags (it's
     #  28 of them)
     OUTPUT_LAYER_SIZE = 27
+    SIMULATION_TIME_INTERVAL = 150 # in msec
+    RESERVOIR_NETWORK_SIZE = 500
 
     def __init__(self):
         self._input_layer = np.zeros(self.INPUT_LAYER_SIZE)
@@ -14,7 +16,7 @@ class SpikingNeuralNetwork():
         self._output_layer = np.zeros(self.OUTPUT_LAYER_SIZE)
 
     def _initialize_reservoir_network(self):
-        snn_controller = ReservoirNetworkController(500)
+        snn_controller = ReservoirNetworkController(self.RESERVOIR_NETWORK_SIZE)
         return snn_controller
 
     def process_input(self, state):
@@ -22,7 +24,8 @@ class SpikingNeuralNetwork():
         # parameters
         self._set_position_values(self._normalize_input(state.position))
         self._apply_poisson_group_input()
-        self._hidden_layer.run_simulation(150)
+        self._hidden_layer.run_simulation(self.SIMULATION_TIME_INTERVAL)
+        self._decode_snn_output()
 
     def _set_position_values(self, position):
         for i in xrange(len(position)):
@@ -46,6 +49,9 @@ class SpikingNeuralNetwork():
         self._hidden_layer.set_poisson_group_rates(firing_rates)
 
     def _convert_to_rate(self, input):
-        # TODO biologically plausible is between 5 and 100 Hz
+        # biologically plausible is between 5 and 100 Hz
         rate = input*95 + 5
         return rate
+
+    def _decode_snn_output(self):
+        firing_rates = self._hidden_layer.get_reservoir_firing_rates()

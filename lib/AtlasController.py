@@ -12,7 +12,6 @@ class AtlasController():
         rospy.init_node('atlas_controller')
         self.subscriber = rospy.Subscriber('atlas/atlas_state', AtlasState,
                                   self._state_cb)
-        # rospy.spin()
         self._network = SpikingNeuralNetwork()
 
     def _state_cb(self, msg):
