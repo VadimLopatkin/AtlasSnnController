@@ -1,10 +1,10 @@
 import numpy as np
 
-from lib.IzhikevichController import IzhikevichController
+from lib.ReservoirNetworkController import ReservoirNetworkController
 
 
 class SpikingNeuralNetwork():
-    INPUT_LAYER_SIZE = 277 # probably smaller as k_effort is just flags (it's
+    INPUT_LAYER_SIZE = 277 # probably smaller, as k_effort is just flags (it's
     #  28 of them)
     OUTPUT_LAYER_SIZE = 27
 
@@ -14,23 +14,38 @@ class SpikingNeuralNetwork():
         self._output_layer = np.zeros(self.OUTPUT_LAYER_SIZE)
 
     def _initialize_reservoir_network(self):
-        snn_controller = IzhikevichController(500)
+        snn_controller = ReservoirNetworkController(500)
         return snn_controller
 
-    def set_input_layer_state(self, state):
-        self._set_position_values(state.position)
-        self._normalize_input_layer()
+    def process_input(self, state):
+        # TODO so far we are using only position, eventually should use more
+        # parameters
+        self._set_position_values(self._normalize_input(state.position))
+        self._apply_poisson_group_input()
+        self._hidden_layer.run_simulation(150)
 
     def _set_position_values(self, position):
         for i in xrange(len(position)):
             self._input_layer[i] = position[i]
 
-    def _normalize_input_layer(self):
-        max_value = np.amax(self._input_layer)
-        min_value = np.amin(self._input_layer)
-        for i in xrange(len(self._input_layer)):
-            self._input_layer[i] = (self._input_layer[i] - min_value)/(
-                max_value - min_value)
+    def _normalize_input(self, input):
+        max_value = np.amax(input)
+        min_value = np.amin(input)
+        result = []
+        for i in xrange(len(input)):
+            result.append((input[i] - min_value)/(max_value - min_value))
+        return result
 
     def get_input_layer_values(self):
         return self._input_layer
+
+    def _apply_poisson_group_input(self):
+        firing_rates = np.zeros(len(self._input_layer))
+        for i in xrange(len(self._input_layer)):
+            firing_rates[i] = self._convert_to_rate(self._input_layer[i])
+        self._hidden_layer.set_poisson_group_rates(firing_rates)
+
+    def _convert_to_rate(self, input):
+        # TODO biologically plausible is between 5 and 100 Hz
+        rate = input*95 + 5
+        return rate

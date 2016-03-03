@@ -15,8 +15,9 @@ class TestAtlasController(unittest.TestCase):
     NODE_NAME = "fake_atlas_node"
 
     def test_init(self):
-        self._init_fake_atlas_publisher(True)
-        self._send_fake_atlas_states(10)
+        atlas_controller = AtlasController()
+        # self._init_fake_atlas_publisher(True)
+        # self._send_fake_atlas_states(10)
 
     def test_atlas_controller_receives_atlas_states(self):
         atlas_controller = AtlasController()
@@ -24,7 +25,7 @@ class TestAtlasController(unittest.TestCase):
         self._init_fake_atlas_publisher()
         time.sleep(1)
         self._send_fake_atlas_states(0.001)
-        time.sleep(1)
+        time.sleep(600)
         self.assertEqual(self._get_fake_atlas_state_message(1).header,
                          atlas_controller.get_state().header)
         self.assertItemsEqual(self._get_fake_atlas_state_message(1).position,
