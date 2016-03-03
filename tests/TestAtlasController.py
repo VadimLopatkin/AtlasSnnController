@@ -25,7 +25,7 @@ class TestAtlasController(unittest.TestCase):
         self._init_fake_atlas_publisher()
         time.sleep(1)
         self._send_fake_atlas_states(0.001)
-        time.sleep(600)
+        time.sleep(1)
         self.assertEqual(self._get_fake_atlas_state_message(1).header,
                          atlas_controller.get_state().header)
         self.assertItemsEqual(self._get_fake_atlas_state_message(1).position,

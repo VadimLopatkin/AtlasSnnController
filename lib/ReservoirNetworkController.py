@@ -39,7 +39,7 @@ class ReservoirNetworkController():
         self._snn_reservoir.I = current
 
     def run_simulation(self, millisec):
-        run(millisec * ms)
+        self._network.run(millisec * ms)
 
     # plot(M.t/ms, M.v[0], '-b', lw=2, label='N0: membrane potential')
     # plot(M.t/ms, Mu.u[0], '-g', label='N0: membrane recovery')
@@ -68,3 +68,4 @@ class ReservoirNetworkController():
                                                         'v', record=True)
         self._membrane_recovery_monitor = StateMonitor(self._snn_reservoir,
                                                        'u', record=True)
+        self._network.add(self._membrane_potential_monitor,self._membrane_recovery_monitor)
