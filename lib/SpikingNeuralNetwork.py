@@ -54,4 +54,4 @@ class SpikingNeuralNetwork():
         return rate
 
     def _decode_snn_output(self):
-        firing_rates = self._hidden_layer.get_reservoir_firing_rates()
+        firing_rates = self._hidden_layer.get_reservoir_firing_rates_output()

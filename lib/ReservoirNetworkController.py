@@ -4,45 +4,71 @@ import numpy as np
 
 class ReservoirNetworkController():
     _INPUT_LAYER_SIZE = 277
-    _SPIKE_WINDOW = 150
+    _OUTPUT_LAYER_SIZE = 27
 
     def __init__(self, number_of_neurons):
         self._hidden_layer_spike_monitor = None
+        self._output_layer_spike_monitor = None
         self._network = Network()
-        self._poisson_group = PoissonGroup(self._INPUT_LAYER_SIZE, 5 * Hz)
-        self._network.add(self._poisson_group)
-        eqs = '''
+        self._initialize_neuron_groups(number_of_neurons)
+
+        self._initialize_input_synapses()
+        self._initialize_reservoir_synapses()
+        self._initialize_output_synapses()
+
+        self._initialize_monitoring()
+
+    def _initialize_reservoir_synapses(self):
+        self._synapses = Synapses(self._snn_reservoir, self._snn_reservoir,
+                                  pre='v_post += 20')
+        self._synapses.connect('(i!=j and rand()<0.008) or (i==j and rand('
+                               ')<0.2)')
+        self._network.add(self._synapses)
+
+    def _initialize_input_synapses(self):
+        self._input_synapses = Synapses(self._poisson_group,
+                                        self._snn_reservoir,
+                                        pre='v_post+=30')
+        # pre code can later be changed via self._input_synapses.pre.code =
+        # 'v+=30'
+        self._input_synapses.connect(
+            '(i!=j and rand()<0.005) or (i==j and rand('
+            ')<0.9)')
+        self._network.add(self._input_synapses)
+
+    def _initialize_neuron_groups(self, number_of_neurons):
+        self._inititalize_poisson_input_layer()
+        self._izhikevich_equation = '''
         dv/dt = (0.04*(v**2)+5*v+140 - u + I)/ms : 1
         du/dt = (0.02*(0.2*v - u))/ms : 1
         I : 1
         '''
-        self._snn_reservoir = NeuronGroup(number_of_neurons, eqs,
+        self._initialize_hidden_neuron_layer(number_of_neurons)
+        self._initialize_output_neuron_layer()
+
+    def _initialize_hidden_neuron_layer(self, number_of_neurons):
+        self._snn_reservoir = NeuronGroup(number_of_neurons,
+                                          self._izhikevich_equation,
                                           threshold='v>30', reset='''
         v = -65
         u = u + 6
         ''')
+        # TODO we might need to add current (14) during the simulation
         self._snn_reservoir.I = 0
         self._snn_reservoir.v = -70
         self._snn_reservoir.u = -14
         self._network.add(self._snn_reservoir)
-        self._synapses = Synapses(self._snn_reservoir, self._snn_reservoir,
-                            pre='v_post += 5')
-        self._synapses.connect('(i!=j and rand()<0.6) or (i==j and rand()<0.2)')
-        self._network.add(self._synapses)
-        self._input_synapses = Synapses(self._poisson_group, self._snn_reservoir,
-                                  pre='v_post+=30')
-        # pre code can later be changed via self._input_synapses.pre.code =
-        # 'v+=30'
-        self._input_synapses.connect('(i!=j and rand()<0.005) or (i==j and rand('
-                               ')<0.9)')
-        self._network.add(self._input_synapses)
-        self._initialize_monitoring()
+
+    def _inititalize_poisson_input_layer(self):
+        self._poisson_group = PoissonGroup(self._INPUT_LAYER_SIZE, 5 * Hz)
+        self._network.add(self._poisson_group)
 
     def _set_current(self, current):
         # self._snn_reservoir[:1].I = 14
         self._snn_reservoir.I = current
 
     def run_simulation(self, millisec):
+        self._simulation_run_interval = millisec
         self._initialize_monitoring()
         self._network.run(millisec * ms)
 
@@ -54,31 +80,55 @@ class ReservoirNetworkController():
         if(self._hidden_layer_spike_monitor != None):
             self._network.remove(self._hidden_layer_spike_monitor)
             self._hidden_layer_spike_monitor = None
+        if(self._output_layer_spike_monitor != None):
+            self._network.remove(self._output_layer_spike_monitor)
+            self._output_layer_spike_monitor = None
         self._hidden_layer_spike_monitor = SpikeMonitor(
             self._snn_reservoir)
         self._network.add(self._hidden_layer_spike_monitor)
+        self._output_layer_spike_monitor = SpikeMonitor(
+            self._output_layer_neurons)
+        self._network.add(self._output_layer_spike_monitor)
 
-    def get_reservoir_firing_rates(self):
-        spike_trains = self._hidden_layer_spike_monitor.spike_trains()
+    def get_hidden_reservoir_firing_rates(self):
+        firing_rates = self.get_firing_rates_from_monitor(
+                self._hidden_layer_spike_monitor)
+        return firing_rates
+
+    def get_firing_rates_from_monitor(self, spike_monitor):
+        spike_trains = spike_monitor.spike_trains()
         firing_rates = []
         for i in xrange(len(spike_trains)):
             firing_rates.append((1000 * len(spike_trains[i])) /
-                                self._SPIKE_WINDOW)
-
+                                self._simulation_run_interval)
+        # TODO these max and min variables are used for convenient debugging
+        max = np.amax(firing_rates)
+        min = np.amin(firing_rates)
         return firing_rates
 
-    def _count_latest_spikes(self, neuron_spikes):
-        n_latest_spikes = 0
-        for i in xrange(len(neuron_spikes)):
-            time_after_spike = (self._network.t-neuron_spikes[i])/ms
-            if(time_after_spike < self._SPIKE_WINDOW):
-                n_latest_spikes+=1
-        #
-        # if(len(neuron_spikes)>0):
-        #     n = -1
-        #     time_after_spike = (self._network.t-neuron_spikes[n])/ms
-        #     while((time_after_spike < self._SPIKE_WINDOW) and (abs(n)<=len(
-        #             neuron_spikes))):
-        #         n_latest_spikes+=1
-        #         n-=1
-        return n_latest_spikes
+    def get_reservoir_firing_rates_output(self):
+        firing_rates = self.get_firing_rates_from_monitor(
+                self._output_layer_spike_monitor)
+        return firing_rates
+
+    def _initialize_output_neuron_layer(self):
+        self._output_layer_neurons = NeuronGroup(self._OUTPUT_LAYER_SIZE,
+                                          self._izhikevich_equation,
+                                          threshold='v>30', reset='''
+        v = -65
+        u = u + 6
+        ''')
+        # TODO we might need to add current (14) during the simulation
+        self._output_layer_neurons.I = 0
+        self._output_layer_neurons.v = -70
+        self._output_layer_neurons.u = -14
+        self._network.add(self._output_layer_neurons)
+
+    def _initialize_output_synapses(self):
+        self._output_synapses = Synapses(self._snn_reservoir,
+                                         self._output_layer_neurons,
+                                         pre='v_post += 20')
+        self._output_synapses.connect('(i!=j and rand()<0.01) or (i==j and '
+                                      'rand('
+                                      ')<0.9)')
+        self._network.add(self._output_synapses)
