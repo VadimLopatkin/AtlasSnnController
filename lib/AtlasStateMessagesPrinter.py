@@ -1,5 +1,5 @@
 import rospy
-from atlas_msgs.msg import AtlasState
+from atlas_msgs.msg import AtlasState, AtlasSimInterfaceState
 import time
 import numpy as np
 
@@ -34,7 +34,13 @@ def state_cb(msg):
     print zip(message_content,av_deviation)
 
 def sim_int_cb(msg):
-
+    global counter
+    counter += 1
+    if counter == 100:
+        counter = 0
+    else:
+        return
+    print msg.f_out[4]
 
 def uhz_cb(msg):
     global global_message_content
@@ -66,7 +72,7 @@ def uhz_cb(msg):
 
 def main():
     rospy.init_node('atlas_state_messages_printer')
-    subscriber = rospy.Subscriber('atlas/atlas_state', AtlasState,
+    subscriber = rospy.Subscriber('atlas/atlas_sim_interface_state', AtlasSimInterfaceState,
                                             sim_int_cb)
     rospy.spin()
 
