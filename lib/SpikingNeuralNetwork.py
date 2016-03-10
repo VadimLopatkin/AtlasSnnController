@@ -55,3 +55,7 @@ class SpikingNeuralNetwork():
 
     def _decode_snn_output(self):
         firing_rates = self._hidden_layer.get_reservoir_firing_rates_output()
+        firing_rates_normalized = self._normalize_input(firing_rates)
+        for i in xrange(self.OUTPUT_LAYER_SIZE):
+            self._output_layer[i] = firing_rates_normalized[i]
+
