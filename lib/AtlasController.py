@@ -14,7 +14,7 @@ class AtlasController():
         self._learning_mode = learning_mode
         if self._learning_mode:
             self._current_state = AtlasState()
-        rospy.init_node('atlas_controller')
+        rospy.init_node('snn_atlas_controller')
         self._subscriber = rospy.Subscriber('atlas/atlas_state', AtlasState,
                                             self._state_cb)
         self._network = SpikingNeuralNetwork()
