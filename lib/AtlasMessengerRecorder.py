@@ -2,6 +2,7 @@ import rospy
 import time
 from atlas_msgs.msg import AtlasSimInterfaceState, AtlasState, AtlasCommand, \
     AtlasSimInterfaceCommand
+import numpy as np
 
 
 class AtlasMessengerRecorder():
@@ -28,16 +29,17 @@ class AtlasMessengerRecorder():
     def _atlas_state_cb(self, msg):
         self._current_position = msg.position
         if self._current_behavior == AtlasSimInterfaceCommand.WALK:
-            self._position_record.append(msg.position)
-            # print msg.position
-        if (self._current_behavior == AtlasSimInterfaceCommand.STAND) and (len(
-                self._position_record) > 0):
-            self._switch_mode_to_manual()
-            self._proceed_with_walking()
-        if (self._current_behavior == AtlasSimInterfaceCommand.USER) and (
-                    len(self._position_record) > 0):
-            self._proceed_with_walking()
-            time.sleep(0.02)
+            # self._position_record.append(msg.position)
+            print str(np.float32(msg.effort[AtlasState.l_leg_uhz])*100)
+            time.sleep(0.1)
+        # if (self._current_behavior == AtlasSimInterfaceCommand.STAND) and (len(
+        #         self._position_record) > 0):
+        #     self._switch_mode_to_manual()
+        #     self._proceed_with_walking()
+        # if (self._current_behavior == AtlasSimInterfaceCommand.USER) and (
+        #             len(self._position_record) > 0):
+        #     # self._proceed_with_walking()
+        #     time.sleep(0.02)
 
 
     def _sim_int_cb(self, msg):
@@ -53,15 +55,16 @@ class AtlasMessengerRecorder():
 
     def _proceed_with_walking(self):
         message = AtlasCommand()
-        position_list = list(self._current_position)
-        if self._global_record_counter == len(self._position_record)-1:
-            self._global_record_counter = 0
-        else:
-            self._global_record_counter += 1
-        for i in xrange(5,16):
-            position_list[i] = self._position_record[
-                self._global_record_counter][i]
-        message.position = tuple(position_list)
+        message.position = self._current_position
+        # position_list = list(self._current_position)
+        # if self._global_record_counter == len(self._position_record)-1:
+        #     self._global_record_counter = 0
+        # else:
+        #     self._global_record_counter += 1
+        # for i in xrange(5,16):
+        #     position_list[i] = self._position_record[
+        #         self._global_record_counter][i]
+        # message.position = tuple(position_list)
         message.k_effort = [255] * 28
         self._atlas_command_publisher.publish(message)
         time.sleep(0.02)

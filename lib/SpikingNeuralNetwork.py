@@ -31,12 +31,12 @@ class SpikingNeuralNetwork():
         for i in xrange(len(position)):
             self._input_layer[i] = position[i]
 
-    def _normalize_input(self, input):
-        max_value = np.amax(input)
-        min_value = np.amin(input)
+    def _normalize_input(self, input_value):
+        max_value = np.amax(input_value)
+        min_value = np.amin(input_value)
         result = []
-        for i in xrange(len(input)):
-            result.append((input[i] - min_value)/(max_value - min_value))
+        for i in xrange(len(input_value)):
+            result.append((input_value[i] - min_value) / (max_value - min_value))
         return result
 
     def get_input_layer_values(self):

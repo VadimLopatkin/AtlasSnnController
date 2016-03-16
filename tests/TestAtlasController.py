@@ -27,42 +27,42 @@ class TestAtlasController(unittest.TestCase):
         self._send_fake_atlas_states(0.001)
         time.sleep(600)
         self.assertEqual(self._get_fake_atlas_state_message(1).header,
-                         atlas_controller.get_state().header)
+                         atlas_controller.get_current_state().header)
         self.assertItemsEqual(self._get_fake_atlas_state_message(1).position,
-                              atlas_controller.get_state().position)
+                              atlas_controller.get_current_state().position)
         self.assertItemsEqual(self._get_fake_atlas_state_message(1).velocity,
-                              atlas_controller.get_state().velocity)
+                              atlas_controller.get_current_state().velocity)
         self.assertItemsEqual(self._get_fake_atlas_state_message(1).effort,
-                              atlas_controller.get_state().effort)
+                              atlas_controller.get_current_state().effort)
         self.assertItemsEqual(self._get_fake_atlas_state_message(1).kp_position,
-                              atlas_controller.get_state().kp_position)
+                              atlas_controller.get_current_state().kp_position)
         self.assertItemsEqual(self._get_fake_atlas_state_message(1).kp_velocity,
-                              atlas_controller.get_state().kp_velocity)
+                              atlas_controller.get_current_state().kp_velocity)
         self.assertItemsEqual(self._get_fake_atlas_state_message(1).ki_position,
-                              atlas_controller.get_state().ki_position)
+                              atlas_controller.get_current_state().ki_position)
         self.assertItemsEqual(self._get_fake_atlas_state_message(1).kd_position,
-                              atlas_controller.get_state().kd_position)
+                              atlas_controller.get_current_state().kd_position)
         self.assertItemsEqual(self._get_fake_atlas_state_message(1).i_effort_min,
-                              atlas_controller.get_state().i_effort_min)
+                              atlas_controller.get_current_state().i_effort_min)
         self.assertItemsEqual(self._get_fake_atlas_state_message(
-                1).i_effort_max, atlas_controller.get_state().i_effort_max)
+                1).i_effort_max, atlas_controller.get_current_state().i_effort_max)
         # self.assertItemsEqual(self._get_fake_atlas_state_message(1).k_effort,
         #                      atlas_controller.get_state().k_effort)
         # k_effort will not work (apparently because it's a flag)
         self.assertEqual(self._get_fake_atlas_state_message(
-                1).orientation, atlas_controller.get_state().orientation)
+                1).orientation, atlas_controller.get_current_state().orientation)
         self.assertEqual(self._get_fake_atlas_state_message(
-                1).angular_velocity, atlas_controller.get_state().angular_velocity)
+                1).angular_velocity, atlas_controller.get_current_state().angular_velocity)
         self.assertEqual(self._get_fake_atlas_state_message(
-                1).linear_acceleration, atlas_controller.get_state().linear_acceleration)
+                1).linear_acceleration, atlas_controller.get_current_state().linear_acceleration)
         self.assertEqual(self._get_fake_atlas_state_message(
-                1).l_foot, atlas_controller.get_state().l_foot)
+                1).l_foot, atlas_controller.get_current_state().l_foot)
         self.assertEqual(self._get_fake_atlas_state_message(
-                1).r_foot, atlas_controller.get_state().r_foot)
+                1).r_foot, atlas_controller.get_current_state().r_foot)
         self.assertEqual(self._get_fake_atlas_state_message(
-                1).l_hand, atlas_controller.get_state().l_hand)
+                1).l_hand, atlas_controller.get_current_state().l_hand)
         self.assertEqual(self._get_fake_atlas_state_message(
-                1).r_hand, atlas_controller.get_state().r_hand)
+                1).r_hand, atlas_controller.get_current_state().r_hand)
 
     def test_input_layer_of_snn_is_normalized(self):
         atlas_controller = AtlasController()
