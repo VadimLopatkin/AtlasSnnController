@@ -1,10 +1,12 @@
+from __future__ import division
 from brian2 import *
 import numpy as np
 
 
-class ReservoirNetworkController():
+
+class ReservoirNetworkController:
     _INPUT_LAYER_SIZE = 277
-    _OUTPUT_LAYER_SIZE = 27
+    _OUTPUT_LAYER_SIZE = 28
 
     def __init__(self, number_of_neurons):
         self._hidden_layer_spike_monitor = None

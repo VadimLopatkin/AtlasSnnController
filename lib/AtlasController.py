@@ -2,12 +2,13 @@ import rospy
 
 from atlas_msgs.msg import AtlasState, AtlasSimInterfaceState
 from osrf_msgs.msg import JointCommands
+from datetime import datetime
 
 from lib.SpikingNeuralNetwork import SpikingNeuralNetwork
 from lib.AtlasControllerTrainer import AtlasControllerTrainer
 
 
-class AtlasController():
+class AtlasController:
 
     def __init__(self, learning_mode=False):
         self._initializing = True
@@ -16,11 +17,12 @@ class AtlasController():
             self._current_state = AtlasState()
         rospy.init_node('snn_atlas_controller')
         self._subscriber = rospy.Subscriber('atlas/atlas_state', AtlasState,
-                                            self._state_cb)
+                                            self._state_cb, queue_size=1)
         self._network = SpikingNeuralNetwork()
         self._initializing = False
 
     def _state_cb(self, msg):
+        start_time = datetime.now()
         if self._initializing:
             self._current_state = msg
             return
@@ -32,6 +34,8 @@ class AtlasController():
         else:
             self._current_state = msg
             self._network.process_input(self._current_state)
+        delta = datetime.now() - start_time
+        print "processing time: " + str(delta.microseconds / 1000)
 
     def get_current_state(self):
         return self._current_state

@@ -1,16 +1,19 @@
+from __future__ import division
 import numpy as np
 
 from lib.ReservoirNetworkController import ReservoirNetworkController
+from lib.AtlasJointsInfo import AtlasJointsInfo
 
 
-class SpikingNeuralNetwork():
+class SpikingNeuralNetwork:
     INPUT_LAYER_SIZE = 277 # probably smaller, as k_effort is just flags (it's
     #  28 of them)
-    OUTPUT_LAYER_SIZE = 27
+    OUTPUT_LAYER_SIZE = 28
     SIMULATION_TIME_INTERVAL = 150 # in msec
     RESERVOIR_NETWORK_SIZE = 500
 
     def __init__(self):
+        self._joints_info_provider = AtlasJointsInfo()
         self._input_layer = np.zeros(self.INPUT_LAYER_SIZE)
         self._hidden_layer = self._initialize_reservoir_network()
         self._output_layer = np.zeros(self.OUTPUT_LAYER_SIZE)
@@ -22,7 +25,7 @@ class SpikingNeuralNetwork():
     def process_input(self, state):
         # TODO so far we are using only position, eventually should use more
         # parameters
-        self._set_position_values(self._normalize_input(state.position))
+        self._set_position_values(self._normalize_position_input(state.position))
         self._apply_poisson_group_input()
         self._hidden_layer.run_simulation(self.SIMULATION_TIME_INTERVAL)
         self._decode_snn_output()
@@ -31,12 +34,16 @@ class SpikingNeuralNetwork():
         for i in xrange(len(position)):
             self._input_layer[i] = position[i]
 
-    def _normalize_input(self, input_value):
-        max_value = np.amax(input_value)
-        min_value = np.amin(input_value)
+    def _normalize_position_input(self, input_value):
         result = []
         for i in xrange(len(input_value)):
-            result.append((input_value[i] - min_value) / (max_value - min_value))
+            result.append((input_value[i] -
+                           self._joints_info_provider.get_min_value_for_joint(
+                               i)) / (
+                              self._joints_info_provider.get_max_value_for_joint(
+                                  i) -
+                              self._joints_info_provider.get_min_value_for_joint(
+                                  i)))
         return result
 
     def get_input_layer_values(self):
@@ -55,7 +62,18 @@ class SpikingNeuralNetwork():
 
     def _decode_snn_output(self):
         firing_rates = self._hidden_layer.get_reservoir_firing_rates_output()
-        firing_rates_normalized = self._normalize_input(firing_rates)
+        # TODO here we should make a very intelligent convertion to joints'
+        # values that are applicable for every joint of Atlas
+        firing_rates_normalized = self._normalize_firing_rates_output(firing_rates)
         for i in xrange(self.OUTPUT_LAYER_SIZE):
             self._output_layer[i] = firing_rates_normalized[i]
+
+    def _normalize_firing_rates_output(self, input_value):
+        # biologically plausible is between 5 and 100
+        max_value = 100
+        min_value = 5
+        result = []
+        for i in xrange(len(input_value)):
+            result.append((input_value[i] - min_value) / (max_value - min_value))
+        return result
 
