@@ -1,6 +1,7 @@
 from __future__ import division
 import numpy as np
 
+from datetime import datetime
 from lib.ReservoirNetworkController import ReservoirNetworkController
 from lib.AtlasJointsInfo import AtlasJointsInfo
 
@@ -25,10 +26,30 @@ class SpikingNeuralNetwork:
     def process_input(self, state):
         # TODO so far we are using only position, eventually should use more
         # parameters
+        start_time = datetime.now()
         self._set_position_values(self._normalize_position_input(state.position))
+        stop_time = datetime.now()
+        delta = stop_time - start_time
+        print "converting input in: " + str(delta.seconds) + "." + str(
+                delta.microseconds/1000)
+        start_time = stop_time
         self._apply_poisson_group_input()
+        stop_time = datetime.now()
+        delta = stop_time - start_time
+        print "applying Poisson group in: " + str(delta.seconds) + "." + str(
+                delta.microseconds/1000)
+        start_time = stop_time
         self._hidden_layer.run_simulation(self.SIMULATION_TIME_INTERVAL)
+        stop_time = datetime.now()
+        delta = stop_time - start_time
+        print "simulation running in: " + str(delta.seconds) + "." + str(
+                delta.microseconds/1000)
+        start_time = stop_time
         self._decode_snn_output()
+        stop_time = datetime.now()
+        delta = stop_time - start_time
+        print "decoding output in: " + str(delta.seconds) + "." + str(
+                delta.microseconds/1000)
 
     def _set_position_values(self, position):
         for i in xrange(len(position)):
@@ -69,11 +90,14 @@ class SpikingNeuralNetwork:
             self._output_layer[i] = firing_rates_normalized[i]
 
     def _normalize_firing_rates_output(self, input_value):
-        # biologically plausible is between 5 and 100
+        # biologically plausible is between 5 and 100 Hz
         max_value = 100
         min_value = 5
         result = []
         for i in xrange(len(input_value)):
             result.append((input_value[i] - min_value) / (max_value - min_value))
         return result
+
+    def get_output_layer_values(self):
+        return self._output_layer
 
