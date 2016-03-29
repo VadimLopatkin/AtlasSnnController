@@ -14,6 +14,17 @@ class SpikingNeuralNetwork:
     RESERVOIR_NETWORK_SIZE = 500
 
     def __init__(self):
+        self._output_layer_activations = np.zeros(self.OUTPUT_LAYER_SIZE)
+        self._hidden_layer_weights = np.zeros([self.RESERVOIR_NETWORK_SIZE, 10])
+        self._hidden_layer_neuron_mapping = \
+            self._initialize_hidden_layer_neuron_mapping()
+        for i in xrange(len(self._hidden_layer_neuron_mapping)):
+            one_neuron_mapping = self._hidden_layer_neuron_mapping[i]
+            for c in xrange(len(one_neuron_mapping)):
+                hidden_neuron_index = one_neuron_mapping[c]
+                self._hidden_layer_weights[hidden_neuron_index][i] = \
+                    np.random.rand(1)[0]
+        self._hidden_layer_biases = np.random.rand(len(self.OUTPUT_LAYER_SIZE))
         self._joints_info_provider = AtlasJointsInfo()
         self._input_layer = np.zeros(self.INPUT_LAYER_SIZE)
         self._hidden_layer = self._initialize_reservoir_network()
@@ -85,9 +96,13 @@ class SpikingNeuralNetwork:
         firing_rates = self._hidden_layer.get_reservoir_firing_rates_output()
         # TODO here we should make a very intelligent convertion to joints'
         # values that are applicable for every joint of Atlas
-        firing_rates_normalized = self._normalize_firing_rates_output(firing_rates)
+        firing_rates_normalized = self._normalize_firing_rates_output(
+            firing_rates)
+        # len(firing_rates_normalized) is supposed to be equal to
+        # RESERVOIR_NETWORK_SIZE
+        self._compute_activations_from_reservoir(firing_rates_normalized)
         for i in xrange(self.OUTPUT_LAYER_SIZE):
-            self._output_layer[i] = firing_rates_normalized[i]
+            self._output_layer[i] = self._
 
     def _normalize_firing_rates_output(self, input_value):
         # biologically plausible is between 5 and 100 Hz
@@ -100,4 +115,30 @@ class SpikingNeuralNetwork:
 
     def get_output_layer_values(self):
         return self._output_layer
+
+    def _compute_activations_from_reservoir(self, firing_rates_normalized):
+        for i in xrange(len(self._hidden_layer_neuron_mapping)):
+            one_neuron_mapping = self._hidden_layer_neuron_mapping[i]
+            z = 0
+            for c in xrange(len(one_neuron_mapping)):
+                hidden_neuron_index = one_neuron_mapping[c]
+                rate = firing_rates_normalized[hidden_neuron_index]
+                z = z + self._hidden_layer_weights[hidden_neuron_index][i]*(
+                    1/rate)
+            z = z + self._hidden_layer_biases[i]
+            activation = self._sigmoid(z)
+            self._output_layer_activations[i] = activation
+
+    def _initialize_hidden_layer_neuron_mapping(self):
+        mapping = []
+        for i in xrange(self.OUTPUT_LAYER_SIZE):
+            connected_neurons_num = np.random.randint(1,10,1)[0]
+            one_neuron_mapping = np.random.randint(1,
+                                                self.RESERVOIR_NETWORK_SIZE + 1,
+                                                   connected_neurons_num)
+            mapping.append(one_neuron_mapping)
+        return mapping
+
+    def _sigmoid(self, z):
+        return 1.0/(1.0+np.exp(-z))
 
