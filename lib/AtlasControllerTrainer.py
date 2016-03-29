@@ -41,14 +41,7 @@ class AtlasControllerTrainer:
                                             "error: " + str(
                 np.amax(relative_deltas)) + ".\nRMSE: " + str(
                     root_mean_square_error)
-            # TODO at this point what we need to do is to backpropagate the
-            # error per neuron. Each absolute error value should be converted
-            #  into Hz (frequency) values, for each neuron in output layer
-            # should be identified the neurons that fired at the same time (
-            # more or less - tbd) as the output layer neuron. Afterwards,
-            # every synapse, that was used for simultaneously fired
-            # neurons, should be adjusted accordingly (not clear how to
-            # measure to which value the adjustment should happen).
+            cls._backpropagate_and_train(controller)
             INSTANCE.increase_trainings_counter()
         else:
             print str(
@@ -80,7 +73,8 @@ class AtlasControllerTrainer:
                     .get_max_value_for_joint(i):
                 ratio = value / \
                         INSTANCE._atlas_joints_info_provider.get_max_value_for_joint(i)
-                print "output value for joint " + str(i) + " exceeds it's " \
+                if(ratio > 1.0):
+                    print "output value for joint " + str(i) + " exceeds it's " \
                                                            "maximum allowed " \
                                                            "value by " + str(
                         ratio)
@@ -88,7 +82,8 @@ class AtlasControllerTrainer:
                     .get_min_value_for_joint(i):
                 ratio = INSTANCE._atlas_joints_info_provider\
                     .get_min_value_for_joint(i) / value
-                print "output value for joint " + str(i) + " is lower than " \
+                if(ratio > 1.0):
+                    print "output value for joint " + str(i) + " is lower than " \
                                                            "it's " \
                                                            "minimum allowed " \
                                                            "value by " + str(
@@ -117,6 +112,44 @@ class AtlasControllerTrainer:
         expected_output_list = list(expected_output)
         return np.sqrt(((np.asarray(expected_output_list) -
                          np.asarray(controller_output)) ** 2).mean())
+
+    @classmethod
+    def _backpropagate_and_train(cls, controller):
+        print "\nentering _backpropagate_and_train"
+        eta = 3.0
+        expected_output = controller.get_current_state().position
+        controller_output = controller.get_output()
+        # TODO: we can do the training several times per iteration, can try
+        # this depending on the performance
+        hidden_layer_firing_rates = controller.get_hidden_layer_firing_rates()
+        hidden_layer_biases = controller.get_hidden_layer_biases()
+        print "len(expected_output) = " + str(len(expected_output))
+        for i in xrange(len(expected_output)):
+            delta = (controller_output[i] - expected_output[i]
+                     )*controller_output[i]*(1-controller_output[i])
+            print "delta = " + str(delta)
+            nabla_b = delta
+            hidden_layer_weights = \
+                controller.get_hidden_layer_weights_for_output_neuron(i)
+            hidden_layer_weights_after_training = np.zeros(len(hidden_layer_weights))
+            output_layer_mapping = controller.get_mapping_for_output_neuron(i)
+            print "len(hidden_layer_weights) = "+str(len(hidden_layer_weights))
+            for c in xrange(len(hidden_layer_weights)):
+                hidden_neuron_idx = output_layer_mapping[c]
+                print "hidden_neuron_idx = " + str(hidden_neuron_idx)
+                nabla_w = delta*(1/hidden_layer_firing_rates[hidden_neuron_idx])
+                print "nabla_w = " + str(nabla_w)
+                hidden_layer_weights_after_training[c] = \
+                    hidden_layer_weights[c] - eta*nabla_w
+            print "hidden_layer_weights = " + str(hidden_layer_weights)
+            print "hidden_layer_weights_after_training = " + str(
+                    hidden_layer_weights_after_training)
+            hidden_layer_biases[i] = hidden_layer_biases[i] - eta*nabla_b
+            controller.set_hidden_layer_weights_for_neuron(i,
+                    hidden_layer_weights_after_training)
+        controller.set_hidden_layer_biases(hidden_layer_biases)
+        print "leaving _backpropagate_and_train\n"
+
 
 
 INSTANCE = AtlasControllerTrainer()

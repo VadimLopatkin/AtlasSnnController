@@ -68,6 +68,27 @@ class AtlasController:
     def get_output(self):
         return self._output
 
+    def get_hidden_layer_weights_for_output_neuron(self,neuron_idx):
+        return self._network.get_hidden_layer_weights_for_output_neuron(
+                neuron_idx)
+
+    def get_hidden_layer_firing_rates(self):
+        return self._network.get_hidden_layer_firing_rates()
+
+    def get_hidden_layer_biases(self):
+        return self._network.get_hidden_layer_biases()
+
+    def get_mapping_for_output_neuron(self, neuron_idx):
+        return self._network.get_mapping_for_output_neuron(neuron_idx)
+
+    def set_hidden_layer_weights_for_neuron(self,neuron_idx,
+                                            hidden_layer_weights):
+        self._network.set_hidden_layer_weights_for_neuron(neuron_idx,
+                                                          hidden_layer_weights)
+
+    def set_hidden_layer_biases(self,hidden_layer_biases):
+        self._network.set_hidden_layer_biases(hidden_layer_biases)
+
 
 def atlas_command_reader(msg):
     print "enter"

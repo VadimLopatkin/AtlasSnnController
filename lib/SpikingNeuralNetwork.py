@@ -141,3 +141,30 @@ class SpikingNeuralNetwork:
     def _sigmoid(self, z):
         return 1.0/(1.0+np.exp(-z))
 
+    def get_hidden_layer_weights_for_output_neuron(self, neuron_idx):
+        hidden_layer_weights_T = self._hidden_layer_weights.T
+        return hidden_layer_weights_T[neuron_idx]
+
+    def get_hidden_layer_firing_rates(self):
+        return self._hidden_layer.get_reservoir_firing_rates_output()
+
+    def get_mapping_for_output_neuron(self, neuron_idx):
+        return self._hidden_layer_neuron_mapping[neuron_idx]
+
+    def get_hidden_layer_biases(self):
+        return self._hidden_layer_biases
+
+    def set_hidden_layer_weights_for_neuron(self, neuron_idx,
+                                            hidden_layer_weights):
+        print "entering set_hidden_layer_weights_for_neuron"
+        print "len(self._hidden_layer_weights.T[neuron_idx]) = " + str(len(
+                self._hidden_layer_weights.T[neuron_idx]))
+        print "len(hidden_layer_weights) = " + str(len(hidden_layer_weights))
+        self._hidden_layer_weights.T[neuron_idx] = hidden_layer_weights
+        print "leaving set_hidden_layer_weights_for_neuron"
+
+    def set_hidden_layer_biases(self, hidden_layer_biases):
+        print "entering set_hidden_layer_biases"
+        self._hidden_layer_biases = hidden_layer_biases
+        print "leaving set_hidden_layer_biases"
+
