@@ -15,8 +15,9 @@ class SpikingNeuralNetwork:
 
     def __init__(self):
         self._output_layer_activations = np.zeros(self.OUTPUT_LAYER_SIZE)
-        self._hidden_layer_weights = np.zeros([self.RESERVOIR_NETWORK_SIZE, 10])
-        self._hidden_layer_neuron_mapping = \
+        self._hidden_layer_weights = np.zeros([self.RESERVOIR_NETWORK_SIZE,
+                                               self.OUTPUT_LAYER_SIZE])
+        self._hidden_layer_neuron_mapping =  \
             self._initialize_hidden_layer_neuron_mapping()
         for i in xrange(len(self._hidden_layer_neuron_mapping)):
             one_neuron_mapping = self._hidden_layer_neuron_mapping[i]
@@ -24,7 +25,7 @@ class SpikingNeuralNetwork:
                 hidden_neuron_index = one_neuron_mapping[c]
                 self._hidden_layer_weights[hidden_neuron_index][i] = \
                     np.random.rand(1)[0]
-        self._hidden_layer_biases = np.random.rand(len(self.OUTPUT_LAYER_SIZE))
+        self._hidden_layer_biases = np.random.rand(self.OUTPUT_LAYER_SIZE)
         self._joints_info_provider = AtlasJointsInfo()
         self._input_layer = np.zeros(self.INPUT_LAYER_SIZE)
         self._hidden_layer = self._initialize_reservoir_network()
@@ -94,15 +95,13 @@ class SpikingNeuralNetwork:
 
     def _decode_snn_output(self):
         firing_rates = self._hidden_layer.get_reservoir_firing_rates_output()
-        # TODO here we should make a very intelligent convertion to joints'
-        # values that are applicable for every joint of Atlas
         firing_rates_normalized = self._normalize_firing_rates_output(
             firing_rates)
         # len(firing_rates_normalized) is supposed to be equal to
         # RESERVOIR_NETWORK_SIZE
         self._compute_activations_from_reservoir(firing_rates_normalized)
         for i in xrange(self.OUTPUT_LAYER_SIZE):
-            self._output_layer[i] = self._
+            self._output_layer[i] = self._output_layer_activations[i]
 
     def _normalize_firing_rates_output(self, input_value):
         # biologically plausible is between 5 and 100 Hz
