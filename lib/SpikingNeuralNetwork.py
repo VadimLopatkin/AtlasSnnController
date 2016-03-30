@@ -122,6 +122,8 @@ class SpikingNeuralNetwork:
             for c in xrange(len(one_neuron_mapping)):
                 hidden_neuron_index = one_neuron_mapping[c]
                 rate = firing_rates_normalized[hidden_neuron_index]
+                # TODO: computing activation from reservoir as 1/rate is
+                # quite questionable!!!
                 z = z + self._hidden_layer_weights[hidden_neuron_index][i]*(
                     1/rate)
             z = z + self._hidden_layer_biases[i]
@@ -133,7 +135,7 @@ class SpikingNeuralNetwork:
         for i in xrange(self.OUTPUT_LAYER_SIZE):
             connected_neurons_num = np.random.randint(1,10,1)[0]
             one_neuron_mapping = np.random.randint(1,
-                                                self.RESERVOIR_NETWORK_SIZE + 1,
+                                                self.RESERVOIR_NETWORK_SIZE,
                                                    connected_neurons_num)
             mapping.append(one_neuron_mapping)
         return mapping
@@ -142,7 +144,13 @@ class SpikingNeuralNetwork:
         return 1.0/(1.0+np.exp(-z))
 
     def get_hidden_layer_weights_for_output_neuron(self, neuron_idx):
+        # print "entering get_hidden_layer_weights_for_output_neuron"
         hidden_layer_weights_T = self._hidden_layer_weights.T
+        # print "len(hidden_layer_weights_T[neuron_idx]) = " + str(len(
+        #         hidden_layer_weights_T[neuron_idx]))
+        # print "hidden_layer_weights_T[neuron_idx] : " + str(
+        #         hidden_layer_weights_T[neuron_idx])
+        # print "leaving get_hidden_layer_weights_for_output_neuron"
         return hidden_layer_weights_T[neuron_idx]
 
     def get_hidden_layer_firing_rates(self):
@@ -156,12 +164,12 @@ class SpikingNeuralNetwork:
 
     def set_hidden_layer_weights_for_neuron(self, neuron_idx,
                                             hidden_layer_weights):
-        print "entering set_hidden_layer_weights_for_neuron"
-        print "len(self._hidden_layer_weights.T[neuron_idx]) = " + str(len(
-                self._hidden_layer_weights.T[neuron_idx]))
-        print "len(hidden_layer_weights) = " + str(len(hidden_layer_weights))
+        # print "entering set_hidden_layer_weights_for_neuron"
+        # print "len(self._hidden_layer_weights.T[neuron_idx]) = " + str(len(
+        #         self._hidden_layer_weights.T[neuron_idx]))
+        # print "len(hidden_layer_weights) = " + str(len(hidden_layer_weights))
         self._hidden_layer_weights.T[neuron_idx] = hidden_layer_weights
-        print "leaving set_hidden_layer_weights_for_neuron"
+        # print "leaving set_hidden_layer_weights_for_neuron"
 
     def set_hidden_layer_biases(self, hidden_layer_biases):
         print "entering set_hidden_layer_biases"

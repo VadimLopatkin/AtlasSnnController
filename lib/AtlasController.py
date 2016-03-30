@@ -1,4 +1,5 @@
 import rospy
+import numpy as np
 
 from atlas_msgs.msg import AtlasState, AtlasSimInterfaceState
 from osrf_msgs.msg import JointCommands
@@ -47,14 +48,23 @@ class AtlasController:
         return self._network
 
     def _convert_output(self):
+        # print "entering AtlasController._convert_output()"
         result = []
         network_output = self._network.get_output_layer_values()
         for i in xrange(len(network_output)):
             network_output_item = network_output[i]
             if network_output_item > 1:
+                # TODO: this case is, probably impossible as
+                # network_output_item is a sigmoid function output when using
+                #  artificial neurons in output layer
+                print "network_output_item > 1 : " + str(network_output_item)
                 result.append(
                         self._joints_info_provider.get_max_value_for_joint(i))
             elif network_output_item < 0:
+                # TODO: this case is, probably impossible as
+                # network_output_item is a sigmoid function output when using
+                #  artificial neurons in output layer
+                print "network_output_item < 0 : " + str(network_output_item)
                 result.append(
                         self._joints_info_provider.get_min_value_for_joint(i))
             else:
@@ -62,8 +72,10 @@ class AtlasController:
                     self._joints_info_provider.get_max_value_for_joint(i) -
                     self._joints_info_provider.get_min_value_for_joint(
                             i))*network_output_item+self._joints_info_provider.get_min_value_for_joint(i)
+                # print "normalized_value = " + str(normalized_value)
                 result.append(normalized_value)
         self._output = result
+        # print "leaving AtlasController._convert_output()"
 
     def get_output(self):
         return self._output
@@ -88,6 +100,18 @@ class AtlasController:
 
     def set_hidden_layer_biases(self,hidden_layer_biases):
         self._network.set_hidden_layer_biases(hidden_layer_biases)
+
+    def get_output_layer_activations(self):
+        # TODO: temporary validation
+        output_layer_activations = self._network.get_output_layer_values()
+        max_value = np.amax(output_layer_activations)
+        if max_value>1:
+            print "AtlasController.get_output_layer_activations: max_value = " \
+                  "" + str(max_value)
+        min_value = np.amin(output_layer_activations)
+        if min_value<0:
+            print "AtlasController.get_output_layer_activations: min_value = " + str(min_value)
+        return output_layer_activations
 
 
 def atlas_command_reader(msg):
