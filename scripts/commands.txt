@@ -1,0 +1,7 @@
+start gzserver:
+
+VRC_CHEATS_ENABLED=1 roslaunch drcsim_gazebo atlas.launch gui:=false
+
+start teleop:
+
+roslaunch drcsim_gazebo keyboard_teleop.launch

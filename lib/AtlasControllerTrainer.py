@@ -161,7 +161,8 @@ class AtlasControllerTrainer:
                 # TODO: this is a very questionable decision - to compute
                 # activation  from previous layer as 1/hidden_layer_firing_rate
                 if hidden_layer_firing_rate != 0:
-                    nabla_w = delta*(1/hidden_layer_firing_rate)
+                    # nabla_w = delta*(1/hidden_layer_firing_rate)
+                    nabla_w = delta*(0-hidden_layer_firing_rate)
                 else:
                     nabla_w = delta*(1/1)
                 print "nabla_w = " + str(nabla_w)

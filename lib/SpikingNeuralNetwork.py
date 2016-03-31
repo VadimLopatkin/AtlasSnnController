@@ -125,7 +125,8 @@ class SpikingNeuralNetwork:
                 # TODO: computing activation from reservoir as 1/rate is
                 # quite questionable!!!
                 z = z + self._hidden_layer_weights[hidden_neuron_index][i]*(
-                    1/rate)
+                    0-rate)
+                    # 1/rate)
             z = z + self._hidden_layer_biases[i]
             activation = self._sigmoid(z)
             self._output_layer_activations[i] = activation
@@ -172,7 +173,7 @@ class SpikingNeuralNetwork:
         # print "leaving set_hidden_layer_weights_for_neuron"
 
     def set_hidden_layer_biases(self, hidden_layer_biases):
-        print "entering set_hidden_layer_biases"
+        # print "entering SpikingNeuralNetwork.set_hidden_layer_biases"
         self._hidden_layer_biases = hidden_layer_biases
-        print "leaving set_hidden_layer_biases"
+        # print "leaving SpikingNeuralNetwork.set_hidden_layer_biases"
 
