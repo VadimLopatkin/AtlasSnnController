@@ -15,6 +15,7 @@ class AtlasControllerTrainer:
                                             self._sim_int_cb)
         self._trainings_counter = 0
         self._calls_counter = 0
+        self._rmse_queue = []
 
     @classmethod
     def train_the_network(cls, controller):
@@ -41,6 +42,13 @@ class AtlasControllerTrainer:
                                             "error: " + str(
                 np.amax(relative_deltas)) + ".\nRMSE: " + str(
                     root_mean_square_error)
+            if len(INSTANCE._rmse_queue) >= 20:
+                INSTANCE._rmse_queue.pop(0)
+                if np.average(INSTANCE._rmse_queue)<0.15:
+                    print "Learning is finished, switching to walking mode"
+                    controller.set_learning_mode(False)
+                    return
+            INSTANCE._rmse_queue.append(root_mean_square_error)
             # we need to train the network on the same input and output
             # several times
             for i in xrange(10):
@@ -164,17 +172,12 @@ class AtlasControllerTrainer:
                     hidden_neuron_idx]
                 # print "hidden_layer_firing_rate = " + str(
                 #         hidden_layer_firing_rate)
-                # if hidden_layer_firing_rate != 0:
-                    # nabla_w = delta*(1/hidden_layer_firing_rate)
                 # TODO maybe we should find a more elegant way to deal with it
                 if hidden_layer_firing_rate == 0:
                     hidden_layer_firing_rate = 0.0001
                 # TODO: this is a very questionable decision - to compute
                 # activation  from previous layer as 1/hidden_layer_firing_rate
                 nabla_w = delta*(1/hidden_layer_firing_rate)
-                # else:
-                #     print "hidden_layer_firing_rate == 0"
-                #     nabla_w = delta*(1/1)
                 # print "nabla_w = " + str(nabla_w)
                 hidden_layer_weights_after_training[hidden_neuron_idx] = \
                     hidden_layer_weights[hidden_neuron_idx] - eta*nabla_w

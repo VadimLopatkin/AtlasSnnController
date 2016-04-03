@@ -106,12 +106,12 @@ class SpikingNeuralNetwork:
         # print "SpikingNeuralNetwork._decode_snn_output(): " \
         #       "np.amin(firing_rates_normalized) = " + str(
         #         np.amin(firing_rates_normalized))
-        print "SpikingNeuralNetwork._decode_snn_output(): " \
-              "np.amax(firing_rates) = " + str(
-                np.amax(firing_rates))
-        print "SpikingNeuralNetwork._decode_snn_output(): " \
-              "np.amin(firing_rates) = " + str(
-                np.amin(firing_rates))
+        # print "SpikingNeuralNetwork._decode_snn_output(): " \
+        #       "np.amax(firing_rates) = " + str(
+        #         np.amax(firing_rates))
+        # print "SpikingNeuralNetwork._decode_snn_output(): " \
+        #       "np.amin(firing_rates) = " + str(
+        #         np.amin(firing_rates))
         # len(firing_rates_normalized) is supposed to be equal to
         # RESERVOIR_NETWORK_SIZE
         self._compute_activations_from_reservoir(firing_rates)
@@ -151,6 +151,7 @@ class SpikingNeuralNetwork:
     def _initialize_hidden_layer_neuron_mapping(self):
         mapping = []
         for i in xrange(self.OUTPUT_LAYER_SIZE):
+            # TODO should be np.random.randint(10)
             connected_neurons_num = np.random.randint(1,10,1)[0]
             one_neuron_mapping = np.random.randint(1,
                                                 self.RESERVOIR_NETWORK_SIZE,

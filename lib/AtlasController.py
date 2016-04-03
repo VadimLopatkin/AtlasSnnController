@@ -37,6 +37,7 @@ class AtlasController:
         else:
             self._current_state = msg
             self._network.process_input(self._current_state)
+            self._convert_output()
         delta = datetime.now() - start_time
         print "processing time: " + str(delta.seconds) + "." + str(
                 delta.microseconds/1000) + "\n"
@@ -116,6 +117,9 @@ class AtlasController:
     def recalculate_output_layer(self):
         self._network.recalculate_output_layer()
         self._convert_output()
+
+    def set_learning_mode(self, mode):
+        self._learning_mode = mode
 
 
 def atlas_command_reader(msg):
