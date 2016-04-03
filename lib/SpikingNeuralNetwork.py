@@ -10,7 +10,7 @@ class SpikingNeuralNetwork:
     INPUT_LAYER_SIZE = 277 # probably smaller, as k_effort is just flags (it's
     #  28 of them)
     OUTPUT_LAYER_SIZE = 28
-    SIMULATION_TIME_INTERVAL = 150 # in msec
+    SIMULATION_TIME_INTERVAL = 150 # msec
     RESERVOIR_NETWORK_SIZE = 500
 
     def __init__(self):
@@ -77,6 +77,7 @@ class SpikingNeuralNetwork:
                                   i) -
                               self._joints_info_provider.get_min_value_for_joint(
                                   i)))
+        # output values are between 0 and 1
         return result
 
     def get_input_layer_values(self):
@@ -89,17 +90,31 @@ class SpikingNeuralNetwork:
         self._hidden_layer.set_poisson_group_rates(firing_rates)
 
     def _convert_to_rate(self, input):
+        # input values are between 0 and 1 (after normalization)
         # biologically plausible is between 5 and 100 Hz
         rate = input*95 + 5
         return rate
 
     def _decode_snn_output(self):
         firing_rates = self._hidden_layer.get_reservoir_firing_rates_output()
-        firing_rates_normalized = self._normalize_firing_rates_output(
-            firing_rates)
+        # TODO why do we need to normalize firing rates now? let's not do that.
+        # firing_rates_normalized = self._normalize_firing_rates_output(
+        #     firing_rates)
+        # print "SpikingNeuralNetwork._decode_snn_output(): " \
+        #       "np.amax(firing_rates_normalized) = " + str(
+        #         np.amax(firing_rates_normalized))
+        # print "SpikingNeuralNetwork._decode_snn_output(): " \
+        #       "np.amin(firing_rates_normalized) = " + str(
+        #         np.amin(firing_rates_normalized))
+        print "SpikingNeuralNetwork._decode_snn_output(): " \
+              "np.amax(firing_rates) = " + str(
+                np.amax(firing_rates))
+        print "SpikingNeuralNetwork._decode_snn_output(): " \
+              "np.amin(firing_rates) = " + str(
+                np.amin(firing_rates))
         # len(firing_rates_normalized) is supposed to be equal to
         # RESERVOIR_NETWORK_SIZE
-        self._compute_activations_from_reservoir(firing_rates_normalized)
+        self._compute_activations_from_reservoir(firing_rates)
         for i in xrange(self.OUTPUT_LAYER_SIZE):
             self._output_layer[i] = self._output_layer_activations[i]
 
@@ -115,18 +130,20 @@ class SpikingNeuralNetwork:
     def get_output_layer_values(self):
         return self._output_layer
 
-    def _compute_activations_from_reservoir(self, firing_rates_normalized):
+    def _compute_activations_from_reservoir(self, firing_rates):
         for i in xrange(len(self._hidden_layer_neuron_mapping)):
             one_neuron_mapping = self._hidden_layer_neuron_mapping[i]
             z = 0
             for c in xrange(len(one_neuron_mapping)):
                 hidden_neuron_index = one_neuron_mapping[c]
-                rate = firing_rates_normalized[hidden_neuron_index]
+                rate = firing_rates[hidden_neuron_index]
+                # TODO think of a more elegant way to deal with it
+                if rate == 0:
+                    rate = 0.0001
                 # TODO: computing activation from reservoir as 1/rate is
                 # quite questionable!!!
                 z = z + self._hidden_layer_weights[hidden_neuron_index][i]*(
-                    0-rate)
-                    # 1/rate)
+                     1/rate)
             z = z + self._hidden_layer_biases[i]
             activation = self._sigmoid(z)
             self._output_layer_activations[i] = activation
@@ -177,3 +194,5 @@ class SpikingNeuralNetwork:
         self._hidden_layer_biases = hidden_layer_biases
         # print "leaving SpikingNeuralNetwork.set_hidden_layer_biases"
 
+    def recalculate_output_layer(self):
+        self._decode_snn_output()

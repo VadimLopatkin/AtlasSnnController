@@ -68,6 +68,7 @@ class ReservoirNetworkController:
 
     def run_simulation(self, millisec):
         self._simulation_run_interval = millisec
+        # TODO: check if it's a reason for slow performance
         self._initialize_monitoring()
         self._network.run(millisec * ms)
 
@@ -95,11 +96,14 @@ class ReservoirNetworkController:
             firing_rates.append((1000 * len(spike_trains[i])) /
                                 self._simulation_run_interval)
         # TODO these max and min variables are used for convenient debugging
-        max = np.amax(firing_rates)
-        min = np.amin(firing_rates)
+        # max = np.amax(firing_rates)
+        # min = np.amin(firing_rates)
         return firing_rates
 
     def get_reservoir_firing_rates_output(self):
+        # TODO maybe we could compute the firing rates only ones each time
+        # the simulation step is over and save it in an array to access it
+        # multiple times afterwards
         firing_rates = self.get_firing_rates_from_monitor(
                 self._hidden_layer_spike_monitor)
         return firing_rates

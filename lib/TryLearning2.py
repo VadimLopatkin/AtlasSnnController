@@ -64,7 +64,7 @@ for i in xrange(len(firing_rates)):
 z += hidden_layer_bias
 a = 1.0/(1.0+np.exp(-z))
 print "a = " + str(a)
-desired_activation_value = 0.47
+desired_activation_value = 0.17
 eta = 3.0
 for i in xrange(20):
     delta = (a - desired_activation_value)*a*(1-a)

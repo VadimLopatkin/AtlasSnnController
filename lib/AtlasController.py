@@ -113,6 +113,10 @@ class AtlasController:
             print "AtlasController.get_output_layer_activations: min_value = " + str(min_value)
         return output_layer_activations
 
+    def recalculate_output_layer(self):
+        self._network.recalculate_output_layer()
+        self._convert_output()
+
 
 def atlas_command_reader(msg):
     print "enter"

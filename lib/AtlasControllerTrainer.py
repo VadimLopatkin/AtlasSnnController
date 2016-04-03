@@ -41,7 +41,14 @@ class AtlasControllerTrainer:
                                             "error: " + str(
                 np.amax(relative_deltas)) + ".\nRMSE: " + str(
                     root_mean_square_error)
-            cls._backpropagate_and_train(controller)
+            # we need to train the network on the same input and output
+            # several times
+            for i in xrange(10):
+                cls._backpropagate_and_train(controller)
+            controller_output = controller.get_output()
+            root_mean_square_error = cls._rmse(controller_output,
+                                               expected_output)
+            print "RMSE after training: " + str(root_mean_square_error)
             INSTANCE.increase_trainings_counter()
         else:
             print str(
@@ -115,33 +122,32 @@ class AtlasControllerTrainer:
 
     @classmethod
     def _backpropagate_and_train(cls, controller):
-        print "\nentering _backpropagate_and_train"
+        # print "\nentering _backpropagate_and_train"
         eta = 3.0
         expected_output = controller.get_current_state().position
         controller_output_layer_activations = \
             controller.get_output_layer_activations()
-        # TODO: we can do the training several times per iteration, can try
-        # this depending on the performance
         hidden_layer_firing_rates = controller.get_hidden_layer_firing_rates()
         hidden_layer_biases = controller.get_hidden_layer_biases()
         # print "len(expected_output) = " + str(len(expected_output))
         for i in xrange(len(expected_output)):
             expected_output_item = expected_output[i]
-            print "expected_output_item = " + str(expected_output_item)
-            print "controller output = " + str(controller.get_output()[i])
-            expected_activation_value = expected_output_item/(
+            # print "expected_output_item = " + str(expected_output_item)
+            # print "controller output = " + str(controller.get_output()[i])
+            expected_activation_value = (expected_output_item -
+                INSTANCE._atlas_joints_info_provider.get_min_value_for_joint(i))/(
                 INSTANCE._atlas_joints_info_provider.get_max_value_for_joint(
                         i)-INSTANCE._atlas_joints_info_provider
                 .get_min_value_for_joint(i))
-            print "expected_activation_value = " + str(expected_activation_value)
-            print "controller_output_layer_activations[" + str(i) + "] = " + \
-                  str(
-                    controller_output_layer_activations[i])
+            # print "expected_activation_value = " + str(expected_activation_value)
+            # print "controller_output_layer_activations[" + str(i) + "] = " + \
+            #       str(
+            #         controller_output_layer_activations[i])
             delta = (controller_output_layer_activations[i] -
                      expected_activation_value
                      )*controller_output_layer_activations[i]*(
                 1-controller_output_layer_activations[i])
-            print "delta = " + str(delta)
+            # print "delta = " + str(delta)
             nabla_b = delta
             hidden_layer_weights = \
                 controller.get_hidden_layer_weights_for_output_neuron(i)
@@ -149,26 +155,30 @@ class AtlasControllerTrainer:
                     hidden_layer_weights))
             output_layer_mapping = controller.get_mapping_for_output_neuron(i)
             # print "len(hidden_layer_weights) = "+str(len(hidden_layer_weights))
-            print "len(output_layer_mapping) = "+str(len(output_layer_mapping))
-            print "output_layer_mapping: " + str(output_layer_mapping)
+            # print "len(output_layer_mapping) = "+str(len(output_layer_mapping))
+            # print "output_layer_mapping: " + str(output_layer_mapping)
             for c in xrange(len(output_layer_mapping)):
                 hidden_neuron_idx = output_layer_mapping[c]
-                print "hidden_neuron_idx = " + str(hidden_neuron_idx)
+                # print "hidden_neuron_idx = " + str(hidden_neuron_idx)
                 hidden_layer_firing_rate = hidden_layer_firing_rates[
                     hidden_neuron_idx]
-                print "hidden_layer_firing_rate = " + str(
-                        hidden_layer_firing_rate)
+                # print "hidden_layer_firing_rate = " + str(
+                #         hidden_layer_firing_rate)
+                # if hidden_layer_firing_rate != 0:
+                    # nabla_w = delta*(1/hidden_layer_firing_rate)
+                # TODO maybe we should find a more elegant way to deal with it
+                if hidden_layer_firing_rate == 0:
+                    hidden_layer_firing_rate = 0.0001
                 # TODO: this is a very questionable decision - to compute
                 # activation  from previous layer as 1/hidden_layer_firing_rate
-                if hidden_layer_firing_rate != 0:
-                    # nabla_w = delta*(1/hidden_layer_firing_rate)
-                    nabla_w = delta*(0-hidden_layer_firing_rate)
-                else:
-                    nabla_w = delta*(1/1)
-                print "nabla_w = " + str(nabla_w)
+                nabla_w = delta*(1/hidden_layer_firing_rate)
+                # else:
+                #     print "hidden_layer_firing_rate == 0"
+                #     nabla_w = delta*(1/1)
+                # print "nabla_w = " + str(nabla_w)
                 hidden_layer_weights_after_training[hidden_neuron_idx] = \
                     hidden_layer_weights[hidden_neuron_idx] - eta*nabla_w
-                print "--------"
+                # print "--------"
             # print "hidden_layer_weights = " + str(hidden_layer_weights)
             # print "hidden_layer_weights_after_training = " + str(
             #         hidden_layer_weights_after_training)
@@ -176,7 +186,8 @@ class AtlasControllerTrainer:
             controller.set_hidden_layer_weights_for_neuron(i,
                     hidden_layer_weights_after_training)
         controller.set_hidden_layer_biases(hidden_layer_biases)
-        print "leaving _backpropagate_and_train\n"
+        controller.recalculate_output_layer()
+        # print "leaving _backpropagate_and_train\n"
 
 
 
