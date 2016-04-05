@@ -6,8 +6,9 @@ import actionlib
 
 from lib.AtlasJointsInfo import AtlasJointsInfo
 from atlas_msgs.msg import AtlasSimInterfaceCommand, AtlasSimInterfaceState, \
-    WalkDemoAction, AtlasBehaviorStepData
-from std_msgs.msg import String
+    WalkDemoAction, AtlasBehaviorStepData, WalkDemoGoal, \
+    AtlasBehaviorStepParams, AtlasBehaviorStandParams, AtlasBehaviorManipulateParams
+from std_msgs.msg import String, Header
 from tf.transformations import quaternion_from_euler
 
 
@@ -23,6 +24,7 @@ class AtlasControllerTrainer:
         self._calls_counter = 0
         self._rmse_queue = []
         self._network_trained = False
+        self._sim_int_cb_counter = 0
 
     @classmethod
     def train_the_network(cls, controller):
@@ -54,7 +56,11 @@ class AtlasControllerTrainer:
                 if np.average(INSTANCE._rmse_queue)<0.15:
                     print "Learning is finished, switching to walking mode"
                     INSTANCE._network_trained = True
+                    INSTANCE.reset_robot_pose()
                     controller.set_learning_mode(False)
+                    #TODO maybe we should let it in Stand mode set in
+                    # reset_robot_pose
+                    INSTANCE.set_control_mode("User")
                     return
             INSTANCE._rmse_queue.append(root_mean_square_error)
             # we need to train the network on the same input and output
@@ -75,13 +81,18 @@ class AtlasControllerTrainer:
 
     def _sim_int_cb(self, msg):
         self._current_behavior = msg.current_behavior
+        self._sim_int_cb_counter += 1
         if (msg.current_behavior != AtlasSimInterfaceCommand.WALK) and (
-                self._network_trained == False):
-            print "Atlas robot is standing and we engage walking"
-            if self._robot_walking_initialized == False:
+                self._network_trained == False) and (
+                    self._sim_int_cb_counter>10000):
+            self._sim_int_cb_counter = 0
+            print "\nAtlas robot is standing and we engage walking"
+            if not self._robot_walking_initialized:
                 self._init_walking_client()
+            self.reset_robot_pose()
             print "Atlas robot should start walking"
             self._send_walking_command()
+            # rospy.sleep(10.0)
 
     def increase_calls_counter(self):
         self._calls_counter += 1
@@ -218,15 +229,7 @@ class AtlasControllerTrainer:
                                                        String, None, False, True, queue_size=1)
         print "Control Mode publisher started"
         print "Waiting for server..."
-        # self._walking_client.wait_for_server()
-        self._mode_publisher.publish("harnessed")
-        self._control_mode_publisher.publish("Freeze")
-        self._control_mode_publisher.publish("StandPrep")
-        rospy.sleep(2.0)
-        self._mode_publisher.publish("nominal")
-        rospy.sleep(0.3)
-        self._control_mode_publisher.publish("Stand")
-        print "walking mode switched"
+        self._walking_client.wait_for_server()
         self._robot_walking_initialized = True
 
     def _send_walking_command(self):
@@ -234,8 +237,16 @@ class AtlasControllerTrainer:
         # the code is modified based on the code of drcsim package
         # keyboard_teleop,py
         steps = self._build_steps()
+        print "len(steps) = " + str(len(steps))
+        k_effort = [0]*28
+        walk_goal = WalkDemoGoal(Header(), WalkDemoGoal.WALK, steps,
+                                 AtlasBehaviorStepParams(),
+                                 AtlasBehaviorStandParams(),
+                                 AtlasBehaviorManipulateParams(),  k_effort)
+        self._walking_client.send_goal(walk_goal)
 
-    def _build_steps(self):
+    @staticmethod
+    def _build_steps():
         L = 0.15
         L_lat = 0.15
         R = 2
@@ -248,7 +259,7 @@ class AtlasControllerTrainer:
         steps = []
 
         # Builds the sequence of steps needed
-        for i in range(10):
+        for i in range(50):
             is_even = i%2
             is_odd = 1 - is_even
             is_right_foot = is_even
@@ -269,22 +280,18 @@ class AtlasControllerTrainer:
             # Alternate between feet, start with left
             step.foot_index = is_right_foot
 
-            #If moving laterally to the left, start with the right foot
-            if (lateral > 0):
-                step.foot_index = is_left_foot
-
-            step.duration = self.params["Stride Duration"]["value"]
+            step.duration = 0.63
 
             step.pose.position.x = X
             step.pose.position.y = Y
-            step.pose.position.z = self.params["Step Height"]["value"]
+            step.pose.position.z = 0.0
 
             step.pose.orientation.x = Q[0]
             step.pose.orientation.y = Q[1]
             step.pose.orientation.z = Q[2]
             step.pose.orientation.w = Q[3]
 
-            step.swing_height = self.params["Swing Height"]["value"]
+            step.swing_height = 0.1
             steps.append(step)
 
         # Add final step to bring feet together
@@ -293,40 +300,38 @@ class AtlasControllerTrainer:
         # foot = 1 for left, foot = -1 for right
         foot = 1 - 2 * is_right_foot
 
-        if turn == 0:
-            Y = Y + foot * W
-        elif forward != 0:
-            self.debuginfo("R: " + str(R) + " R_foot:" + \
-            str(R_foot) + " theta: " + str(theta) +  \
-           " math.sin(theta): " + str(math.sin(theta)) + \
-           " math.cos(theta) + " + str(math.cos(theta)))
-
-            # R_foot is radius to foot
-            R_foot = R + foot * W/2
-            #turn > 0 for counter clockwise
-            X = forward * turn * R_foot * math.sin(theta)
-            Y = forward * turn * (R - R_foot*math.cos(theta))
-        else:
-            X = turn * W/2 * math.sin(theta)
-            Y = turn * W/2 * math.cos(theta)
+        Y = Y + foot * W
 
         Q = quaternion_from_euler(0, 0, theta)
         step = AtlasBehaviorStepData()
         step.step_index = len(steps)
         step.foot_index = is_right_foot
-        step.duration = self.params["Stride Duration"]["value"]
+        step.duration = 0.63
         step.pose.position.x = X
         step.pose.position.y = Y
-        step.pose.position.z = self.params["Step Height"]["value"]
+        step.pose.position.z = 0.0
         step.pose.orientation.x = Q[0]
         step.pose.orientation.y = Q[1]
         step.pose.orientation.z = Q[2]
         step.pose.orientation.w = Q[3]
-        step.swing_height = self.params["Swing Height"]["value"]
+        step.swing_height = 0.1
 
         steps.append(step)
 
         return steps
+
+    def reset_robot_pose(self):
+        self._mode_publisher.publish("harnessed")
+        self._control_mode_publisher.publish("Freeze")
+        self._control_mode_publisher.publish("StandPrep")
+        rospy.sleep(2.0)
+        self._mode_publisher.publish("nominal")
+        rospy.sleep(0.3)
+        self._control_mode_publisher.publish("Stand")
+        print "walking mode switched"
+
+    def set_control_mode(self, control_mode):
+        self._control_mode_publisher.publish(control_mode)
 
 
 INSTANCE = AtlasControllerTrainer()

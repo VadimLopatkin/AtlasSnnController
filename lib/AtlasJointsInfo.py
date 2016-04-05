@@ -9,49 +9,56 @@ class AtlasJointsInfo:
         # /583228ebd72677c36a393b3260f0c5f0bc7b0f87/atlas_description/urdf
         # /atlas.urdf?at=default&fileviewer=file-view-default - correspond to
         #  Atlas v1 model
-        self._set_joint_info(AtlasState.back_lbz, -0.610865, 0.610865)
-        self._set_joint_info(AtlasState.back_mby, -1.2, 1.28)
-        self._set_joint_info(AtlasState.back_ubx, -0.790809, 0.790809)
+        self._set_joint_info(AtlasState.back_lbz, -0.610865, 0.610865, 'back_lbz')
+        self._set_joint_info(AtlasState.back_mby, -1.2, 1.28, 'back_mby')
+        self._set_joint_info(AtlasState.back_ubx, -0.790809, 0.790809, 'back_ubx')
 
-        self._set_joint_info(AtlasState.l_arm_elx, 0, 2.35619)
-        self._set_joint_info(AtlasState.l_arm_ely, 0, 3.14159)
-        self._set_joint_info(AtlasState.l_arm_shx, -1.39626, 1.74533)
-        self._set_joint_info(AtlasState.l_arm_usy, -1.9635, 1.9635)
-        self._set_joint_info(AtlasState.l_arm_mwx, -0.436, 1.571)
-        self._set_joint_info(AtlasState.l_arm_uwy, -1.571, 1.571)
+        self._set_joint_info(AtlasState.l_arm_elx, 0, 2.35619, 'l_arm_elx')
+        self._set_joint_info(AtlasState.l_arm_ely, 0, 3.14159, 'l_arm_ely')
+        self._set_joint_info(AtlasState.l_arm_shx, -1.39626, 1.74533, 'l_arm_shx')
+        self._set_joint_info(AtlasState.l_arm_usy, -1.9635, 1.9635, 'l_arm_usy')
+        self._set_joint_info(AtlasState.l_arm_mwx, -0.436, 1.571, 'l_arm_mwx')
+        self._set_joint_info(AtlasState.l_arm_uwy, -1.571, 1.571, 'l_arm_uwy')
 
-        self._set_joint_info(AtlasState.l_leg_lax, -0.436, 0.436)
-        self._set_joint_info(AtlasState.l_leg_lhy, -1.75, 0.524)
-        self._set_joint_info(AtlasState.l_leg_mhx, -0.47, 0.495)
-        self._set_joint_info(AtlasState.l_leg_uay, -0.698, 0.698)
-        self._set_joint_info(AtlasState.l_leg_uhz, -0.32, 1.14)
-        self._set_joint_info(AtlasState.l_leg_kny, 0, 2.45)
+        self._set_joint_info(AtlasState.l_leg_lax, -0.436, 0.436, 'l_leg_lax')
+        self._set_joint_info(AtlasState.l_leg_lhy, -1.75, 0.524, 'l_leg_lhy')
+        self._set_joint_info(AtlasState.l_leg_mhx, -0.47, 0.495, 'l_leg_mhx')
+        self._set_joint_info(AtlasState.l_leg_uay, -0.698, 0.698, 'l_leg_uay')
+        self._set_joint_info(AtlasState.l_leg_uhz, -0.32, 1.14,'l_leg_uhz')
+        self._set_joint_info(AtlasState.l_leg_kny, 0, 2.45, 'l_leg_kny')
 
-        self._set_joint_info(AtlasState.neck_ay, -0.610865238, 1.13446401)
+        self._set_joint_info(AtlasState.neck_ay, -0.610865238, 1.13446401, 'neck_ay')
 
-        self._set_joint_info(AtlasState.r_arm_elx, -2.35619, 0)
-        self._set_joint_info(AtlasState.r_arm_ely, 0, 3.14159)
-        self._set_joint_info(AtlasState.r_arm_shx, -1.74533, 1.39626)
-        self._set_joint_info(AtlasState.r_arm_usy, -1.9635, 1.9635)
-        self._set_joint_info(AtlasState.r_arm_mwx, -1.571, 0.436)
-        self._set_joint_info(AtlasState.r_arm_uwy, -1.571, 1.571)
+        self._set_joint_info(AtlasState.r_arm_elx, -2.35619, 0, 'r_arm_elx')
+        self._set_joint_info(AtlasState.r_arm_ely, 0, 3.14159, 'r_arm_ely')
+        self._set_joint_info(AtlasState.r_arm_shx, -1.74533, 1.39626, 'r_arm_shx')
+        self._set_joint_info(AtlasState.r_arm_usy, -1.9635, 1.9635, 'r_arm_usy')
+        self._set_joint_info(AtlasState.r_arm_mwx, -1.571, 0.436, 'r_arm_mwx')
+        self._set_joint_info(AtlasState.r_arm_uwy, -1.571, 1.571, 'r_arm_uwy')
 
-        self._set_joint_info(AtlasState.r_leg_lax, -0.436, 0.436)
-        self._set_joint_info(AtlasState.r_leg_lhy, -1.745, 0.524)
-        self._set_joint_info(AtlasState.r_leg_mhx, -0.495, 0.495)
-        self._set_joint_info(AtlasState.r_leg_uay, -0.698, 0.698)
-        self._set_joint_info(AtlasState.r_leg_uhz, -1.14, 0.32)
-        self._set_joint_info(AtlasState.r_leg_kny, 0, 2.45)
+        self._set_joint_info(AtlasState.r_leg_lax, -0.436, 0.436, 'r_leg_lax')
+        self._set_joint_info(AtlasState.r_leg_lhy, -1.745, 0.524, 'r_leg_lhy')
+        self._set_joint_info(AtlasState.r_leg_mhx, -0.495, 0.495, 'r_leg_mhx')
+        self._set_joint_info(AtlasState.r_leg_uay, -0.698, 0.698, 'r_leg_uay')
+        self._set_joint_info(AtlasState.r_leg_uhz, -1.14, 0.32, 'r_leg_uhz')
+        self._set_joint_info(AtlasState.r_leg_kny, 0, 2.45, 'r_leg_kny')
 
 
 
-    def _set_joint_info(self, joint_id, lower, upper):
+    def _set_joint_info(self, joint_id, lower, upper, name):
         self._joints_info[joint_id] = {}
         self._joints_info[joint_id]['lower'] = lower
         self._joints_info[joint_id]['upper'] = upper
+        self._joints_info[joint_id]['name'] = name
 
     def get_max_value_for_joint(self, joint_id):
         return self._joints_info[joint_id]['upper']
 
     def get_min_value_for_joint(self, joint_id):
         return self._joints_info[joint_id]['lower']
+
+    def get_full_name_for_joint(self, joint_id):
+        return 'atlas::' + self._joints_info[joint_id]['name']
+
+    def get_short_name_for_joint(self, joint_id):
+        return self._joints_info[joint_id]['name']

@@ -20,6 +20,8 @@ class AtlasController:
         rospy.init_node('snn_atlas_controller')
         self._subscriber = rospy.Subscriber('atlas/atlas_state', AtlasState,
                                             self._state_cb, queue_size=1)
+        self._joint_commands_publisher = rospy.Publisher(
+                '/atlas/joint_commands', JointCommands, queue_size=1)
         self._network = SpikingNeuralNetwork()
         self._initializing = False
 
@@ -38,6 +40,7 @@ class AtlasController:
             self._current_state = msg
             self._network.process_input(self._current_state)
             self._convert_output()
+            self._send_walking_command_to_atlas()
         delta = datetime.now() - start_time
         print "processing time: " + str(delta.seconds) + "." + str(
                 delta.microseconds/1000) + "\n"
@@ -121,20 +124,39 @@ class AtlasController:
     def set_learning_mode(self, mode):
         self._learning_mode = mode
 
-
-def atlas_command_reader(msg):
-    print "enter"
-    print msg
-
-
-def main():
-    rospy.init_node('atlas_controller')
-    subscriber = rospy.Subscriber('atlas/joint_commands', JointCommands,
-                                  atlas_command_reader)
-    print "start"
-    rospy.spin()
-    print "finish"
-
-
-if __name__ == '__main__':
-    main()
+    def _send_walking_command_to_atlas(self):
+        atlasJointNames = []
+        n = len(self._current_state.position)
+        for i in xrange(n):
+            atlasJointNames.append(
+                    self._joints_info_provider.get_full_name_for_joint(i))
+        command = JointCommands()
+        command.position     = np.zeros(n)
+        command.velocity     = np.zeros(n)
+        command.effort       = np.zeros(n)
+        command.kp_position  = np.zeros(n)
+        command.ki_position  = np.zeros(n)
+        command.kd_position  = np.zeros(n)
+        command.kp_velocity  = np.zeros(n)
+        command.i_effort_min = np.zeros(n)
+        command.i_effort_max = np.zeros(n)
+        for i in xrange(n):
+            command.kp_position[i]  = rospy.get_param(
+                    'atlas_controller/gains/' +
+                    self._joints_info_provider.get_short_name_for_joint(i) +
+                    '/p')
+            command.ki_position[i]  = rospy.get_param(
+                    'atlas_controller/gains/' +
+                    self._joints_info_provider.get_short_name_for_joint(i) +
+                    '/i')
+            command.kd_position[i]  = rospy.get_param(
+                    'atlas_controller/gains/' +
+                    self._joints_info_provider.get_short_name_for_joint(i) +
+                    '/d')
+            command.i_effort_max[i] = rospy.get_param(
+                    'atlas_controller/gains/' +
+                    self._joints_info_provider.get_short_name_for_joint(i) +
+                    '/i_clamp')
+            command.i_effort_min[i] = -command.i_effort_max[i]
+        command.position = self._output
+        self._joint_commands_publisher.publish(command)
