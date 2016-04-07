@@ -1,13 +1,13 @@
 from __future__ import division
 from brian2 import *
-import numpy as np
+from datetime import datetime
 
 
 
 class ReservoirNetworkController:
-    _INPUT_LAYER_SIZE = 277
 
-    def __init__(self, number_of_neurons):
+    def __init__(self, number_of_neurons, input_layer_size):
+        self._input_layer_size = input_layer_size
         self._hidden_layer_spike_monitor = None
         self._output_layer_spike_monitor = None
         self._network = Network()
@@ -59,7 +59,7 @@ class ReservoirNetworkController:
         self._network.add(self._snn_reservoir)
 
     def _initialize_poisson_input_layer(self):
-        self._poisson_group = PoissonGroup(self._INPUT_LAYER_SIZE, 5 * Hz)
+        self._poisson_group = PoissonGroup(self._input_layer_size, 5 * Hz)
         self._network.add(self._poisson_group)
 
     def _set_current(self, current):
@@ -77,12 +77,16 @@ class ReservoirNetworkController:
             self._poisson_group.rates.set_item(i,firing_rates[i]*Hz)
 
     def _initialize_monitoring(self):
+        start_time = datetime.now()
         if(self._hidden_layer_spike_monitor != None):
             self._network.remove(self._hidden_layer_spike_monitor)
             self._hidden_layer_spike_monitor = None
         self._hidden_layer_spike_monitor = SpikeMonitor(
             self._snn_reservoir)
         self._network.add(self._hidden_layer_spike_monitor)
+        delta = datetime.now() - start_time
+        print "initializing monitoring in: " + str(delta.seconds) + "." + str(
+                delta.microseconds/1000)
 
     def get_hidden_reservoir_firing_rates(self):
         firing_rates = self.get_firing_rates_from_monitor(

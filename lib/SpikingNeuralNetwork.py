@@ -7,8 +7,7 @@ from lib.AtlasJointsInfo import AtlasJointsInfo
 
 
 class SpikingNeuralNetwork:
-    INPUT_LAYER_SIZE = 277 # probably smaller, as k_effort is just flags (it's
-    #  28 of them)
+    INPUT_LAYER_SIZE = 28
     OUTPUT_LAYER_SIZE = 28
     SIMULATION_TIME_INTERVAL = 150 # msec
     RESERVOIR_NETWORK_SIZE = 500
@@ -32,7 +31,8 @@ class SpikingNeuralNetwork:
         self._output_layer = np.zeros(self.OUTPUT_LAYER_SIZE)
 
     def _initialize_reservoir_network(self):
-        snn_controller = ReservoirNetworkController(self.RESERVOIR_NETWORK_SIZE)
+        snn_controller = ReservoirNetworkController(
+                self.RESERVOIR_NETWORK_SIZE, self.INPUT_LAYER_SIZE)
         return snn_controller
 
     def process_input(self, state):

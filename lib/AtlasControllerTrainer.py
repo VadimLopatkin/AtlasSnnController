@@ -65,7 +65,13 @@ class AtlasControllerTrainer:
             INSTANCE._rmse_queue.append(root_mean_square_error)
             # we need to train the network on the same input and output
             # several times
-            for i in xrange(10):
+            if root_mean_square_error > 0.5:
+                training_iterations = 100
+            elif root_mean_square_error > 0.35:
+                training_iterations = 50
+            else:
+                training_iterations = 10
+            for i in xrange(training_iterations):
                 cls._backpropagate_and_train(controller)
             controller_output = controller.get_output()
             root_mean_square_error = cls._rmse(controller_output,
