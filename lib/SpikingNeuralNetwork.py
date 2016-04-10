@@ -1,3 +1,20 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
 from __future__ import division
 import numpy as np
 
@@ -9,8 +26,10 @@ from lib.AtlasJointsInfo import AtlasJointsInfo
 class SpikingNeuralNetwork:
     INPUT_LAYER_SIZE = 28
     OUTPUT_LAYER_SIZE = 28
-    SIMULATION_TIME_INTERVAL = 150 # msec
+    SIMULATION_TIME_INTERVAL = 15 # msec
     RESERVOIR_NETWORK_SIZE = 500
+    MAX_INPUT_RATE = 1000
+    MIN_INPUT_RATE = 50
 
     def __init__(self):
         self._output_layer_activations = np.zeros(self.OUTPUT_LAYER_SIZE)
@@ -92,7 +111,8 @@ class SpikingNeuralNetwork:
     def _convert_to_rate(self, input):
         # input values are between 0 and 1 (after normalization)
         # biologically plausible is between 5 and 100 Hz
-        rate = input*95 + 5
+        rate = input*(self.MAX_INPUT_RATE - self.MIN_INPUT_RATE) + \
+               self.MIN_INPUT_RATE
         return rate
 
     def _decode_snn_output(self):
@@ -119,9 +139,8 @@ class SpikingNeuralNetwork:
             self._output_layer[i] = self._output_layer_activations[i]
 
     def _normalize_firing_rates_output(self, input_value):
-        # biologically plausible is between 5 and 100 Hz
-        max_value = 100
-        min_value = 5
+        max_value = self.MAX_INPUT_RATE
+        min_value = self.MIN_INPUT_RATE
         result = []
         for i in xrange(len(input_value)):
             result.append((input_value[i] - min_value) / (max_value - min_value))
@@ -143,7 +162,7 @@ class SpikingNeuralNetwork:
                 # TODO: computing activation from reservoir as 1/rate is
                 # quite questionable!!!
                 z = z + self._hidden_layer_weights[hidden_neuron_index][i]*(
-                     1/rate)
+                    rate/self.MAX_INPUT_RATE)
             z = z + self._hidden_layer_biases[i]
             activation = self._sigmoid(z)
             self._output_layer_activations[i] = activation

@@ -1,5 +1,23 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
 import rospy
 import numpy as np
+import threading
 
 from atlas_msgs.msg import AtlasState, AtlasSimInterfaceState
 from osrf_msgs.msg import JointCommands
@@ -13,6 +31,9 @@ from lib.AtlasJointsInfo import AtlasJointsInfo
 class AtlasController:
     def __init__(self, learning_mode=False):
         self._initializing = True
+
+        self._sending_thread_started = False
+
         self._joints_info_provider = AtlasJointsInfo()
         self._learning_mode = learning_mode
         if self._learning_mode:
@@ -38,9 +59,21 @@ class AtlasController:
             AtlasControllerTrainer.train_the_network(self)
         else:
             self._current_state = msg
+            t1 = threading.Thread(target=self._get_gains_from_actionlib_server())
+            t1.start()
             self._network.process_input(self._current_state)
             self._convert_output()
-            self._send_walking_command_to_atlas()
+
+            if self._sending_thread_started:
+                self._sending_thread.join()
+                self._sending_thread_started = False
+
+            t1.join()
+            self._sending_thread = threading.Thread(
+                target=self._send_walking_command_to_atlas())
+            print "self._sending_thread.start()"
+            self._sending_thread.start()
+
         delta = datetime.now() - start_time
         print "processing time: " + str(delta.seconds) + "." + str(
                 delta.microseconds/1000) + "\n"
@@ -127,12 +160,16 @@ class AtlasController:
 
     def _send_walking_command_to_atlas(self):
         print "entering AtlasController._send_walking_command_to_atlas()"
+
+        self._sending_thread_started = True
+
         atlasJointNames = []
         n = len(self._current_state.position)
         for i in xrange(n):
             atlasJointNames.append(
                     self._joints_info_provider.get_full_name_for_joint(i))
         command = JointCommands()
+        command.name = list(atlasJointNames)
         command.position = self._output
         command.velocity = self._current_state.velocity
         command.effort = self._current_state.effort
@@ -142,9 +179,8 @@ class AtlasController:
         command.kp_velocity = np.zeros(n)
         command.i_effort_min = np.zeros(n)
         command.i_effort_max = np.zeros(n)
-        param_name = 'atlas_controller/gains'
-        print "getting param_name: " + param_name
-        gains = rospy.get_param(param_name)
+        # self._get_gains_from_actionlib_server()
+        gains = self._gains
         for i in xrange(n):
             command.kp_position[i] = gains[
                 self._joints_info_provider.get_short_name_for_joint(i)]['p']
@@ -158,3 +194,11 @@ class AtlasController:
             command.i_effort_min[i] = -command.i_effort_max[i]
         self._joint_commands_publisher.publish(command)
         print "leaving AtlasController._send_walking_command_to_atlas()"
+
+    def get_max_input_rate(self):
+        return self._network.MAX_INPUT_RATE
+
+    def _get_gains_from_actionlib_server(self):
+        param_name = 'atlas_controller/gains'
+        print "getting param_name: " + param_name
+        self._gains = rospy.get_param(param_name)

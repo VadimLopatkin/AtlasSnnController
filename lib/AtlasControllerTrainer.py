@@ -1,3 +1,20 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
 from __future__ import division
 
 import rospy
@@ -54,7 +71,7 @@ class AtlasControllerTrainer:
                     root_mean_square_error)
             if len(INSTANCE._rmse_queue) >= 20:
                 INSTANCE._rmse_queue.pop(0)
-                if np.average(INSTANCE._rmse_queue)<0.15:
+                if np.average(INSTANCE._rmse_queue)<0.1:
                     print "Learning is finished, switching to walking mode"
                     INSTANCE._network_trained = True
                     INSTANCE.reset_robot_pose()
@@ -100,7 +117,7 @@ class AtlasControllerTrainer:
             self.reset_robot_pose()
             print "Atlas robot should start walking"
             self._send_walking_command()
-            # rospy.sleep(10.0)
+            rospy.sleep(3.0)
 
     def increase_calls_counter(self):
         self._calls_counter += 1
@@ -190,6 +207,11 @@ class AtlasControllerTrainer:
                      )*controller_output_layer_activations[i]*(
                 1-controller_output_layer_activations[i])
             # print "delta = " + str(delta)
+            if abs(delta) < 0.01:
+                if delta < 0:
+                    delta = -0.01
+                else:
+                    delta = 0.01
             nabla_b = delta
             hidden_layer_weights = \
                 controller.get_hidden_layer_weights_for_output_neuron(i)
@@ -211,7 +233,8 @@ class AtlasControllerTrainer:
                     hidden_layer_firing_rate = 0.0001
                 # TODO: this is a very questionable decision - to compute
                 # activation  from previous layer as 1/hidden_layer_firing_rate
-                nabla_w = delta*(1/hidden_layer_firing_rate)
+                nabla_w = delta*(
+                    hidden_layer_firing_rate/controller.get_max_input_rate())
                 # print "nabla_w = " + str(nabla_w)
                 hidden_layer_weights_after_training[hidden_neuron_idx] = \
                     hidden_layer_weights[hidden_neuron_idx] - eta*nabla_w
