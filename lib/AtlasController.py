@@ -133,47 +133,28 @@ class AtlasController:
             atlasJointNames.append(
                     self._joints_info_provider.get_full_name_for_joint(i))
         command = JointCommands()
-        command.position = np.zeros(n)
-        command.velocity = np.zeros(n)
-        command.effort = np.zeros(n)
+        command.position = self._output
+        command.velocity = self._current_state.velocity
+        command.effort = self._current_state.effort
         command.kp_position = np.zeros(n)
         command.ki_position = np.zeros(n)
         command.kd_position = np.zeros(n)
         command.kp_velocity = np.zeros(n)
         command.i_effort_min = np.zeros(n)
         command.i_effort_max = np.zeros(n)
+        param_name = 'atlas_controller/gains'
+        print "getting param_name: " + param_name
+        gains = rospy.get_param(param_name)
         for i in xrange(n):
-            param_name = 'atlas_controller/gains/' + \
-                         self._joints_info_provider.get_short_name_for_joint(
-                                 i) + '/p'
-            print "getting param_name: " + param_name
-            command.kp_position[i]  = rospy.get_param(param_name)
-            print "got param_name command.kp_position[" + str(i) + "]: " + \
-                                                               str(
-                                                                       command.kp_position[i])
-            param_name = 'atlas_controller/gains/' + \
-                         self._joints_info_provider.get_short_name_for_joint(
-                                 i) + '/i'
-            print "getting param_name: " + param_name
-            command.ki_position[i]  = rospy.get_param(param_name)
-            print "got param_name command.ki_position[" + str(i) + "]: " + \
-                                                               str(
-                                                                       command.ki_position[i])
-            param_name = 'atlas_controller/gains/' + \
-                         self._joints_info_provider.get_short_name_for_joint(
-                                 i) + '/d'
-            command.kd_position[i]  = rospy.get_param(param_name)
-            print "got param_name command.kd_position[" + str(i) + "]: " + \
-                                                               str(
-                                                                       command.kd_position[i])
-            param_name = 'atlas_controller/gains/' + \
-                         self._joints_info_provider.get_short_name_for_joint(
-                                 i) + '/i_clamp'
-            command.i_effort_max[i] = rospy.get_param(param_name)
-            print "got param_name command.i_effort_max[" + str(i) + "]: " + \
-                                                               str(
-                                                                       command.i_effort_max[i])
+            command.kp_position[i] = gains[
+                self._joints_info_provider.get_short_name_for_joint(i)]['p']
+            command.ki_position[i] = gains[
+                self._joints_info_provider.get_short_name_for_joint(i)]['i']
+            command.kd_position[i] = gains[
+                self._joints_info_provider.get_short_name_for_joint(i)]['d']
+            command.i_effort_max[i] = gains[
+                self._joints_info_provider.get_short_name_for_joint(i)][
+                'i_clamp']
             command.i_effort_min[i] = -command.i_effort_max[i]
-        command.position = self._output
         self._joint_commands_publisher.publish(command)
         print "leaving AtlasController._send_walking_command_to_atlas()"

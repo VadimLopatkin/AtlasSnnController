@@ -1,7 +1,7 @@
 from __future__ import division
+
 import rospy
 import numpy as np
-
 import actionlib
 
 from lib.AtlasJointsInfo import AtlasJointsInfo
@@ -10,6 +10,7 @@ from atlas_msgs.msg import AtlasSimInterfaceCommand, AtlasSimInterfaceState, \
     AtlasBehaviorStepParams, AtlasBehaviorStandParams, AtlasBehaviorManipulateParams
 from std_msgs.msg import String, Header
 from tf.transformations import quaternion_from_euler
+
 
 
 class AtlasControllerTrainer:
@@ -61,6 +62,7 @@ class AtlasControllerTrainer:
                     #TODO maybe we should let it in Stand mode set in
                     # reset_robot_pose
                     INSTANCE.set_control_mode("User")
+                    rospy.sleep(3)
                     return
             INSTANCE._rmse_queue.append(root_mean_square_error)
             # we need to train the network on the same input and output
