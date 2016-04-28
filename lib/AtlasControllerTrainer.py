@@ -22,6 +22,7 @@ import numpy as np
 import actionlib
 
 from lib.AtlasJointsInfo import AtlasJointsInfo
+from lib.RmseSaver import RmseSaver
 from atlas_msgs.msg import AtlasSimInterfaceCommand, AtlasSimInterfaceState, \
     WalkDemoAction, AtlasBehaviorStepData, WalkDemoGoal, \
     AtlasBehaviorStepParams, AtlasBehaviorStandParams, AtlasBehaviorManipulateParams
@@ -32,6 +33,7 @@ from tf.transformations import quaternion_from_euler
 
 class AtlasControllerTrainer:
     def __init__(self):
+        self._rmse_saver = RmseSaver()
         self._robot_walking_initialized = False
         self._atlas_joints_info_provider = AtlasJointsInfo()
         self._current_behavior = AtlasSimInterfaceCommand.NONE
@@ -64,12 +66,13 @@ class AtlasControllerTrainer:
                                                            expected_output)
             root_mean_square_error = cls._rmse(controller_output,
                                                expected_output)
+            INSTANCE.save_rmse(root_mean_square_error)
             print "Max absolute error: " + str(
                 np.amax(absolute_deltas)) + "\nMax relative " \
                                             "error: " + str(
                 np.amax(relative_deltas)) + ".\nRMSE: " + str(
                     root_mean_square_error)
-            if len(INSTANCE._rmse_queue) >= 20:
+            if len(INSTANCE._rmse_queue) >= 50:
                 INSTANCE._rmse_queue.pop(0)
                 if np.average(INSTANCE._rmse_queue)<0.1:
                     print "Learning is finished, switching to walking mode"
@@ -79,6 +82,7 @@ class AtlasControllerTrainer:
                     #TODO maybe we should let it in Stand mode set in
                     # reset_robot_pose
                     INSTANCE.set_control_mode("User")
+                    INSTANCE.write_rmse_csv()
                     rospy.sleep(3)
                     return
             INSTANCE._rmse_queue.append(root_mean_square_error)
@@ -95,6 +99,7 @@ class AtlasControllerTrainer:
             controller_output = controller.get_output()
             root_mean_square_error = cls._rmse(controller_output,
                                                expected_output)
+            INSTANCE.save_rmse(root_mean_square_error)
             print "RMSE after training: " + str(root_mean_square_error)
             INSTANCE.increase_trainings_counter()
         else:
@@ -363,6 +368,12 @@ class AtlasControllerTrainer:
 
     def set_control_mode(self, control_mode):
         self._control_mode_publisher.publish(control_mode)
+
+    def save_rmse(self, rmse):
+        self._rmse_saver.save_rmse(rmse)
+
+    def write_rmse_csv(self):
+        self._rmse_saver.write_rmse_csv()
 
 
 INSTANCE = AtlasControllerTrainer()

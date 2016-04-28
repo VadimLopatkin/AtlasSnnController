@@ -110,30 +110,18 @@ class SpikingNeuralNetwork:
 
     def _convert_to_rate(self, input):
         # input values are between 0 and 1 (after normalization)
-        # biologically plausible is between 5 and 100 Hz
         rate = input*(self.MAX_INPUT_RATE - self.MIN_INPUT_RATE) + \
                self.MIN_INPUT_RATE
         return rate
 
     def _decode_snn_output(self):
         firing_rates = self._hidden_layer.get_reservoir_firing_rates_output()
-        # TODO why do we need to normalize firing rates now? let's not do that.
-        # firing_rates_normalized = self._normalize_firing_rates_output(
-        #     firing_rates)
-        # print "SpikingNeuralNetwork._decode_snn_output(): " \
-        #       "np.amax(firing_rates_normalized) = " + str(
-        #         np.amax(firing_rates_normalized))
-        # print "SpikingNeuralNetwork._decode_snn_output(): " \
-        #       "np.amin(firing_rates_normalized) = " + str(
-        #         np.amin(firing_rates_normalized))
         # print "SpikingNeuralNetwork._decode_snn_output(): " \
         #       "np.amax(firing_rates) = " + str(
         #         np.amax(firing_rates))
         # print "SpikingNeuralNetwork._decode_snn_output(): " \
         #       "np.amin(firing_rates) = " + str(
         #         np.amin(firing_rates))
-        # len(firing_rates_normalized) is supposed to be equal to
-        # RESERVOIR_NETWORK_SIZE
         self._compute_activations_from_reservoir(firing_rates)
         for i in xrange(self.OUTPUT_LAYER_SIZE):
             self._output_layer[i] = self._output_layer_activations[i]
@@ -159,7 +147,8 @@ class SpikingNeuralNetwork:
                 # TODO think of a more elegant way to deal with it
                 if rate == 0:
                     rate = 0.0001
-                # TODO: computing activation from reservoir as 1/rate is
+                # TODO: computing activation from reservoir as
+                # rate/self.MAX_INPUT_RATE is
                 # quite questionable!!!
                 z = z + self._hidden_layer_weights[hidden_neuron_index][i]*(
                     rate/self.MAX_INPUT_RATE)
