@@ -74,7 +74,7 @@ class AtlasControllerTrainer:
                     root_mean_square_error)
             if len(INSTANCE._rmse_queue) >= 50:
                 INSTANCE._rmse_queue.pop(0)
-                if np.average(INSTANCE._rmse_queue)<0.1:
+                if np.average(INSTANCE._rmse_queue)<0.07:
                     print "Learning is finished, switching to walking mode"
                     INSTANCE._network_trained = True
                     INSTANCE.reset_robot_pose()
@@ -90,12 +90,23 @@ class AtlasControllerTrainer:
             # several times
             if root_mean_square_error > 0.5:
                 training_iterations = 100
+                eta = 3.0
             elif root_mean_square_error > 0.35:
                 training_iterations = 50
+                eta = 3.0
+            elif root_mean_square_error > 0.15:
+                training_iterations = 50
+                eta = 1.7
+            elif root_mean_square_error > 0.06:
+                training_iterations = 30
+                eta = 1.4
             else:
-                training_iterations = 10
+                # we do not need to train the network if it's already good
+                # enough
+                training_iterations = 0
+                eta = 3.0
             for i in xrange(training_iterations):
-                cls._backpropagate_and_train(controller)
+                cls._backpropagate_and_train(controller, eta)
             controller_output = controller.get_output()
             root_mean_square_error = cls._rmse(controller_output,
                                                expected_output)
@@ -185,9 +196,8 @@ class AtlasControllerTrainer:
                          np.asarray(controller_output)) ** 2).mean())
 
     @classmethod
-    def _backpropagate_and_train(cls, controller):
+    def _backpropagate_and_train(cls, controller, eta):
         # print "\nentering _backpropagate_and_train"
-        eta = 3.0
         expected_output = controller.get_current_state().position
         controller_output_layer_activations = \
             controller.get_output_layer_activations()

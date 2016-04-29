@@ -29,5 +29,6 @@ class RmseSaver:
         resultFile = open("/home/vadim/tmp/rmse.csv",'wb')
         wr = csv.writer(resultFile, dialect='excel')
         wr.writerow(self._rmse_list)
+        wr.writerow(self._rmse_list[0::2])
         resultFile.close()
         print "RMSE values are saved"
