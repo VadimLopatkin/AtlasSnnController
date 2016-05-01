@@ -17,23 +17,21 @@
 
 import csv
 
-class RmseSaver:
+class FiringRatesSaver:
     def __init__(self):
-        self._rmse_list = []
-        print "RmseSaver initialized"
+        self._firing_rates_list = []
 
-    def save_rmse(self, rmse):
-        self._rmse_list.append(rmse)
-        if (len(self._rmse_list) % 200) == 0:
-            self._save_rmse_csv("/home/vadim/tmp/rmse_bak.csv")
+    def save_firing_rates(self, firing_rates):
+        self._firing_rates_list.append(firing_rates)
+        if (len(self._firing_rates_list) % 100) == 0:
+            self._save_firing_rates_csv("/home/vadim/tmp/firing_bak" +
+                                        str(len(self._firing_rates_list) /
+                                            100) + ".csv")
 
-    def write_rmse_csv(self):
-        self._save_rmse_csv("/home/vadim/tmp/rmse.csv")
-
-    def _save_rmse_csv(self, filename):
+    def _save_firing_rates_csv(self, filename):
         resultFile = open(filename,'wb')
         wr = csv.writer(resultFile, dialect='excel')
-        wr.writerow(self._rmse_list)
-        wr.writerow(self._rmse_list[0::2])
+        for row in self._firing_rates_list:
+            wr.writerow(row)
         resultFile.close()
-        print "RMSE values are saved"
+        print "Firing rates values are saved"

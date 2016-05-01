@@ -19,11 +19,13 @@ from __future__ import division
 from brian2 import *
 from datetime import datetime
 
+from lib.FiringRatesSaver import FiringRatesSaver
 
 
 class ReservoirNetworkController:
 
     def __init__(self, number_of_neurons, input_layer_size):
+        self._firing_rates_recorder = FiringRatesSaver()
         self._input_layer_size = input_layer_size
         self._hidden_layer_spike_monitor = None
         self._output_layer_spike_monitor = None
@@ -119,6 +121,7 @@ class ReservoirNetworkController:
         # TODO these max and min variables are used for convenient debugging
         # max = np.amax(firing_rates)
         # min = np.amin(firing_rates)
+        self._firing_rates_recorder.save_firing_rates(firing_rates)
         return firing_rates
 
     def get_reservoir_firing_rates_output(self):

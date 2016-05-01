@@ -26,10 +26,10 @@ from lib.AtlasJointsInfo import AtlasJointsInfo
 class SpikingNeuralNetwork:
     INPUT_LAYER_SIZE = 28
     OUTPUT_LAYER_SIZE = 28
-    SIMULATION_TIME_INTERVAL = 150 # msec
+    SIMULATION_TIME_INTERVAL = 15 # msec
     RESERVOIR_NETWORK_SIZE = 500
-    MAX_INPUT_RATE = 100
-    MIN_INPUT_RATE = 5
+    MAX_INPUT_RATE = 1000
+    MIN_INPUT_RATE = 50
 
     def __init__(self):
         self._output_layer_activations = np.zeros(self.OUTPUT_LAYER_SIZE)
