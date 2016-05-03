@@ -72,7 +72,7 @@ class AtlasControllerTrainer:
                                             "error: " + str(
                 np.amax(relative_deltas)) + ".\nRMSE: " + str(
                     root_mean_square_error)
-            if len(INSTANCE._rmse_queue) >= 50:
+            if len(INSTANCE._rmse_queue) >= 100:
                 INSTANCE._rmse_queue.pop(0)
                 if np.average(INSTANCE._rmse_queue)<0.07:
                     print "Learning is finished, switching to walking mode"
