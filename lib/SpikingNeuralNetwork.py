@@ -86,10 +86,10 @@ class SpikingNeuralNetwork:
         for i in xrange(len(position)):
             self._input_layer[i] = position[i]
 
-    def _normalize_position_input(self, input_value):
+    def _normalize_position_input(self, position_input):
         result = []
-        for i in xrange(len(input_value)):
-            result.append((input_value[i] -
+        for i in xrange(len(position_input)):
+            result.append((position_input[i] -
                            self._joints_info_provider.get_min_value_for_joint(
                                i)) / (
                               self._joints_info_provider.get_max_value_for_joint(
